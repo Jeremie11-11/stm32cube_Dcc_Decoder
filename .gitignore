@@ -1,0 +1,11 @@
+# Ignore build and compilation files
+.settings/
+Debug/
+build/
+*.o
+*.bin
+*.elf
+*.map
+
+# Ignore temporary and log files
+*.log
