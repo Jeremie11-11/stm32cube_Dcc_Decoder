@@ -22,6 +22,9 @@ typedef struct{
 	uint32_t current;
 	uint32_t Uin_mV;
 	uint32_t Uin_avg_mV;
+	uint32_t Uin_low_mV;
+	uint32_t Uin_low_avg_mV;
+	uint32_t Udiff_mV;
 	int32_t temp;
 	uint32_t under_voltage: 1;
 } ADC_STRUCT;

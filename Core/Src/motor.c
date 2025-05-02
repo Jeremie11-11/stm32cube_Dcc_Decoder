@@ -41,14 +41,15 @@ static void mot_current_source(uint32_t state)
 {
 	if(state == ENABLE)
 	{
-		// Set PIN as push-pull to low state
+		// Set PIN as push-pull to high state
 		GPIO_CONFIG_OUTPUT(PIN_CURRENT_EN);
-		GPIO_WRITE(PIN_CURRENT_EN, FALSE);
+		GPIO_WRITE(PIN_CURRENT_EN, TRUE);
 	}
 	else
 	{
-		// Set PIN as open drain
-		GPIO_CONFIG_INPUT(PIN_CURRENT_EN);
+		// Set PIN as push-pull to low state
+		GPIO_CONFIG_OUTPUT(PIN_CURRENT_EN);
+		GPIO_WRITE(PIN_CURRENT_EN, FALSE);
 	}
 }
 
