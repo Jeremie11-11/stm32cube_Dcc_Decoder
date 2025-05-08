@@ -12,9 +12,11 @@
 #include "stm32l4xx_hal_adc.h"
 
 extern ADC_HandleTypeDef hadc1;
+extern ADC_HandleTypeDef hadc2;
 extern DMA_HandleTypeDef hdma_adc1;
 
 ADC_STRUCT Adc;
+ADC2_STRUCT Adc2;
 ADC_DEBUG_STRUCT AdcDebug;
 
 extern DCC_INSTRUCTION_STRUCT DccInst;
@@ -26,10 +28,13 @@ extern DCC_INSTRUCTION_STRUCT DccInst;
 
 void adc_init(void)
 {
-	Adc.val_cnt = ADC_NUMBER_OF_MEASURE;
+	//Adc.val_cnt = ADC_NUMBER_OF_MEASURE;
 
 	AdcDebug.val_idx = 0;
 	AdcDebug.current_idx = 0;
+
+	// ---------- ADC1 ----------
+	// ADC used for power supply voltage measurement, motor current measurement
 
 	// ADC calibration
 	if (HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED) != HAL_OK)
@@ -42,7 +47,18 @@ void adc_init(void)
 	memcpy(&AdcDebug.ts_cal2, ((void *) TS_CAL2_ADDRESS), 2);
 
 	HAL_ADC_Start(&hadc1);
-	//HAL_ADC_Start(&hadc1);
+
+	// ---------- ADC2 ----------
+	// ADC used for asymmetrical voltage measurement
+
+	// ADC calibration
+	if (HAL_ADCEx_Calibration_Start(&hadc2, ADC_SINGLE_ENDED) != HAL_OK)
+	{
+		// calibration error
+		Error_Handler();
+	}
+
+	HAL_ADC_Start(&hadc2);
 }
 /*
 void adc_SetExternalTrigger(ADC_HandleTypeDef *hadc, uint32_t trigger)
@@ -57,31 +73,47 @@ void adc_SetExternalTrigger(ADC_HandleTypeDef *hadc, uint32_t trigger)
 
 void adc_update(void)
 {
-	static uint32_t current_sum=0;
-	static uint32_t voltage1_sum=0;
-	static uint32_t voltage2_sum=0;
+	static int32_t val_cnt = ADC_NUMBER_OF_MEASURE;
+
+	static uint32_t Ibridge_sum=0;
+	static uint32_t Usupply_sum=0;
 	static int32_t temp_sum=0;
-	//uint32_t current_val=0;
 
-//	current_val = Adc.dma_tab[0];
+	Ibridge_sum += Adc.adc1_meas.data.Ibridge_raw;
+	Usupply_sum += Adc.adc1_meas.data.Usupply_raw;
 
-	current_sum += Adc.dma_tab[0];
-	voltage1_sum += Adc.dma_tab[1];
-	voltage2_sum += Adc.dma_tab[2];
-	//temp_sum += Adc.dma_tab[2];
 
-	if(Adc.val_cnt <= 0)
+	if(val_cnt <= 0)
 	{
+		// ---------- Bridge current ----------
 		// Calculate current ADC 12 bit with 3.3V Uref
-		Adc.current = ((current_sum/ADC_NUMBER_OF_MEASURE) * 3300)/4096;
-		if(Adc.current < 1)
-			Adc.current = 1;
+		uint32_t Ibridge_mA = ((Ibridge_sum/ADC_NUMBER_OF_MEASURE) * 3300)/4096;
+		if(Ibridge_mA < 1)
+			Ibridge_mA = 1;
+
+		Adc.Ibridge_mA = Ibridge_mA;
+
+
+		//Adc.Ibridge_mA = ((Ibridge_sum/ADC_NUMBER_OF_MEASURE) * 3300)/4096;
+		//if(Adc.Ibridge_mA < 1)
+			//Adc.Ibridge_mA = 1;
+
+		// ---------- Power supply voltage ----------
 
 		// Calculate voltage ADC 12 bit with 3.3V Uref with R ratio (R1+R2)/R2 = 9.3
-		Adc.Uin_mV = ((((voltage1_sum/ADC_NUMBER_OF_MEASURE) * 3300)/4096)*93)/10;
+		uint32_t Usupply_mV = ((((Usupply_sum/ADC_NUMBER_OF_MEASURE) * 3300)/4096)*93)/10;
+		if(Usupply_mV < 100)
+			Usupply_mV = 100;
+
+		Adc.Usupply_mV = Usupply_mV;
+		Adc.Uin_mV = Usupply_mV;
+
+		/*
+		// Calculate voltage ADC 12 bit with 3.3V Uref with R ratio (R1+R2)/R2 = 9.3
+		Adc.Uin_mV = ((((Usupply_sum/ADC_NUMBER_OF_MEASURE) * 3300)/4096)*93)/10;
 		if(Adc.Uin_mV < 100)
 			Adc.Uin_mV = 100;
-
+*/
 		if((Adc.under_voltage == FALSE) && (Adc.Uin_mV < 10000))
 		{
 			dcc_update_functions();
@@ -96,27 +128,19 @@ void adc_update(void)
 		}
 
 		// Uin averaged on 400ms
-		Adc.Uin_avg_mV = (Adc.Uin_avg_mV*31 + Adc.Uin_mV)/32;
-
-		// Calculate voltage ADC 12 bit with 3.3V Uref with R ratio (R1+R2)/R2 = 9.3
-		Adc.Uin_low_mV = ((((voltage2_sum/ADC_NUMBER_OF_MEASURE) * 3300)/4096)*93)/10;
-		Adc.Uin_low_avg_mV = (Adc.Uin_low_avg_mV*31 + Adc.Uin_low_mV)/32;
-
-		Adc.Udiff_mV = Adc.Uin_avg_mV - Adc.Uin_low_avg_mV;
-
+		//Adc.Uin_avg_mV = (Adc.Uin_avg_mV*31 + Adc.Uin_mV)/32;
 
 		// Calculate temperature, Reference manual §16.4.32 Temperature sensor
 		//Adc.temp = (((temp_sum/ADC_NUMBER_OF_MEASURE)-AdcDebug.ts_cal1)*(TS_CAL2_TEMP – TS_CAL1_TEMP))/(AdcDebug.ts_cal2-AdcDebug.ts_cal1)+30;
 		Adc.temp = (((temp_sum/ADC_NUMBER_OF_MEASURE)-AdcDebug.ts_cal1)*100)/(AdcDebug.ts_cal2-AdcDebug.ts_cal1)+30;
 
-		AdcDebug.val1[AdcDebug.val_idx] = Adc.dma_tab[0];
-		AdcDebug.val2[AdcDebug.val_idx] = current_sum/ADC_NUMBER_OF_MEASURE;
+		AdcDebug.val1[AdcDebug.val_idx] = Adc.adc1_meas.data.Ibridge_raw;
+		AdcDebug.val2[AdcDebug.val_idx] = Ibridge_sum/ADC_NUMBER_OF_MEASURE;
 		AdcDebug.val_idx = (AdcDebug.val_idx+1) & 0x1F;
 
-		Adc.val_cnt = ADC_NUMBER_OF_MEASURE;
-		current_sum = 0;
-		voltage1_sum = 0;
-		voltage2_sum = 0;
+		val_cnt = ADC_NUMBER_OF_MEASURE;
+		Ibridge_sum = 0;
+		Usupply_sum = 0;
 		temp_sum = 0;
 
 		// Updade PWM (if motor.running is set)
@@ -125,7 +149,7 @@ void adc_update(void)
 	}
 	else
 	{
-		Adc.val_cnt--;
+		val_cnt--;
 	}
 }
 

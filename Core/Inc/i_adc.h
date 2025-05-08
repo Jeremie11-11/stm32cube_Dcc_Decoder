@@ -13,21 +13,44 @@
 // Has to be a power of 2
 #define ADC_NUMBER_OF_MEASURE 512
 
-// Has to be a multiple of 3
-#define DMA_ADC_BUFFER_LENGTH 3
+// Number of conversion corresponding to STM32Cube->ADC1
+#define ADC1_DMA_MEASURE_BUFFER_LENGTH 3
+
+#define ADC2_DMA_BUFFER_LENGTH 256
 
 typedef struct{
-	uint16_t dma_tab[DMA_ADC_BUFFER_LENGTH];
-	int32_t val_cnt;
-	uint32_t current;
-	uint32_t Uin_mV;
-	uint32_t Uin_avg_mV;
-	uint32_t Uin_low_mV;
-	uint32_t Uin_low_avg_mV;
-	uint32_t Udiff_mV;
+	uint16_t Ibridge_raw;
+	uint16_t Usupply_raw;
+	uint16_t Temp_raw;
+} ADC1_DMA_STRUCT;
+
+typedef union {
+    uint16_t tab[ADC1_DMA_MEASURE_BUFFER_LENGTH];
+    ADC1_DMA_STRUCT data;
+} ADC1_DMA_UNION;
+
+typedef struct{
+	ADC1_DMA_UNION adc1_meas;
+	uint16_t asym_volt_tab[ADC2_DMA_BUFFER_LENGTH];
+	uint32_t Usupply_mV;	// Power supply voltage
+	uint32_t Uin_mV;			// Voltage motor (Usupply - Rds_on * Ibridge)
+	uint32_t Ibridge_mA;
+	//uint32_t Uin_avg_mV;
+	//uint32_t Uin_low_mV;
+	//uint32_t Uin_low_avg_mV;
+	//uint32_t Udiff_mV;
 	int32_t temp;
 	uint32_t under_voltage: 1;
 } ADC_STRUCT;
+
+
+
+
+
+typedef struct{
+	//uint16_t asym_volt_tab[ADC2_BUFFER_LENGTH];
+
+} ADC2_STRUCT;
 
 typedef struct{
 	uint16_t ts_cal1;

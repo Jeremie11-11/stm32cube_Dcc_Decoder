@@ -38,4 +38,8 @@ void dma_callback_halffull(DMA_HandleTypeDef *hdma);
 
 void dma_callback_full(DMA_HandleTypeDef *hdma);
 
+void dma_adc2_callback_halffull(DMA_HandleTypeDef *hdma);
+
+void dma_adc2_callback_full(DMA_HandleTypeDef *hdma);
+
 #endif /* INC_I_DMA_H_ */

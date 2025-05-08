@@ -208,7 +208,7 @@ void mot_pwm_update(void)
 				Uin=0;
 			Motor.Umot_mV = (Motor.ccr * Uin) / PWM_MOTOR_PERIOD_CNT;
 
-			Motor.Uemf_mV = Motor.Umot_mV - (22+0) * Adc.current;
+			Motor.Uemf_mV = Motor.Umot_mV - (22+0) * Adc.Ibridge_mA;
 
 			Motor_Uemf2_mV = (Motor.Uemf_old_mV + Motor.Uemf_mV)/2;
 
@@ -305,7 +305,7 @@ void mot_pwm_update(void)
 
 	// Debug
 	memMotData.Uin_mV[Motor.i]  = Adc.Uin_mV;
-	memMotData.Imot_mA[Motor.i] = Adc.current;
+	memMotData.Imot_mA[Motor.i] = Adc.Ibridge_mA;
 	memMotData.Uemf_mV[Motor.i] = Motor.Uemf_mV;
 	memMotData.Unew_mV[Motor.i] = Motor.Unew_mV;
 	if(Motor.i < 255)
