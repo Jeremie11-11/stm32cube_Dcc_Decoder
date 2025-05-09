@@ -16,7 +16,6 @@ extern ADC_HandleTypeDef hadc2;
 extern DMA_HandleTypeDef hdma_adc1;
 
 ADC_STRUCT Adc;
-ADC2_STRUCT Adc2;
 ADC_DEBUG_STRUCT AdcDebug;
 
 extern DCC_INSTRUCTION_STRUCT DccInst;
@@ -71,9 +70,9 @@ void adc_SetExternalTrigger(ADC_HandleTypeDef *hadc, uint32_t trigger)
 }
 */
 
-void adc_update(void)
+void adc1_update_irq(void)
 {
-	static int32_t val_cnt = ADC_NUMBER_OF_MEASURE;
+	static int32_t val_cnt = ADC_NBR_MEASURE_FOR_AVERAGE;
 
 	static uint32_t Ibridge_sum=0;
 	static uint32_t Usupply_sum=0;
@@ -87,7 +86,7 @@ void adc_update(void)
 	{
 		// ---------- Bridge current ----------
 		// Calculate current ADC 12 bit with 3.3V Uref
-		uint32_t Ibridge_mA = ((Ibridge_sum/ADC_NUMBER_OF_MEASURE) * 3300)/4096;
+		uint32_t Ibridge_mA = ((Ibridge_sum/ADC_NBR_MEASURE_FOR_AVERAGE) * 3300)/4096;
 		if(Ibridge_mA < 1)
 			Ibridge_mA = 1;
 
@@ -101,7 +100,7 @@ void adc_update(void)
 		// ---------- Power supply voltage ----------
 
 		// Calculate voltage ADC 12 bit with 3.3V Uref with R ratio (R1+R2)/R2 = 9.3
-		uint32_t Usupply_mV = ((((Usupply_sum/ADC_NUMBER_OF_MEASURE) * 3300)/4096)*93)/10;
+		uint32_t Usupply_mV = ((((Usupply_sum/ADC_NBR_MEASURE_FOR_AVERAGE) * 3300)/4096)*93)/10;
 		if(Usupply_mV < 100)
 			Usupply_mV = 100;
 
@@ -132,13 +131,13 @@ void adc_update(void)
 
 		// Calculate temperature, Reference manual §16.4.32 Temperature sensor
 		//Adc.temp = (((temp_sum/ADC_NUMBER_OF_MEASURE)-AdcDebug.ts_cal1)*(TS_CAL2_TEMP – TS_CAL1_TEMP))/(AdcDebug.ts_cal2-AdcDebug.ts_cal1)+30;
-		Adc.temp = (((temp_sum/ADC_NUMBER_OF_MEASURE)-AdcDebug.ts_cal1)*100)/(AdcDebug.ts_cal2-AdcDebug.ts_cal1)+30;
+		Adc.Temp_dC = (((temp_sum/ADC_NBR_MEASURE_FOR_AVERAGE)-AdcDebug.ts_cal1)*100)/(AdcDebug.ts_cal2-AdcDebug.ts_cal1)+30;
 
 		AdcDebug.val1[AdcDebug.val_idx] = Adc.adc1_meas.data.Ibridge_raw;
-		AdcDebug.val2[AdcDebug.val_idx] = Ibridge_sum/ADC_NUMBER_OF_MEASURE;
+		AdcDebug.val2[AdcDebug.val_idx] = Ibridge_sum/ADC_NBR_MEASURE_FOR_AVERAGE;
 		AdcDebug.val_idx = (AdcDebug.val_idx+1) & 0x1F;
 
-		val_cnt = ADC_NUMBER_OF_MEASURE;
+		val_cnt = ADC_NBR_MEASURE_FOR_AVERAGE;
 		Ibridge_sum = 0;
 		Usupply_sum = 0;
 		temp_sum = 0;

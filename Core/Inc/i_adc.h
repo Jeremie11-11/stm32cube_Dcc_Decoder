@@ -10,10 +10,11 @@
 
 #include "main.h"
 
-// Has to be a power of 2
-#define ADC_NUMBER_OF_MEASURE 512
+//
+#define ADC_NBR_MEASURE_FOR_AVERAGE 512
 
-// Number of conversion corresponding to STM32Cube->ADC1
+// Number of conversion in range from ADC1
+// corresponding to STM32Cube->ADC1
 #define ADC1_DMA_MEASURE_BUFFER_LENGTH 3
 
 #define ADC2_DMA_BUFFER_LENGTH 256
@@ -35,22 +36,15 @@ typedef struct{
 	uint32_t Usupply_mV;	// Power supply voltage
 	uint32_t Uin_mV;			// Voltage motor (Usupply - Rds_on * Ibridge)
 	uint32_t Ibridge_mA;
-	//uint32_t Uin_avg_mV;
+	uint32_t Uasym_mV;
 	//uint32_t Uin_low_mV;
 	//uint32_t Uin_low_avg_mV;
 	//uint32_t Udiff_mV;
-	int32_t temp;
+	int32_t Temp_dC;
 	uint32_t under_voltage: 1;
 } ADC_STRUCT;
 
 
-
-
-
-typedef struct{
-	//uint16_t asym_volt_tab[ADC2_BUFFER_LENGTH];
-
-} ADC2_STRUCT;
 
 typedef struct{
 	uint16_t ts_cal1;
@@ -66,7 +60,7 @@ void adc_init(void);
 
 void adc_SetExternalTrigger(ADC_HandleTypeDef *hadc, uint32_t trigger);
 
-void adc_update(void);
+void adc1_update_irq(void);
 
 uint16_t adc_get_current(void);
 

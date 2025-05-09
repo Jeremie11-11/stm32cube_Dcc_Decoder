@@ -15,6 +15,13 @@
 #define DMA_TIME_BUFFER_LENGTH 128
 #define DMA_TIME_IDX_MASK (DMA_TIME_BUFFER_LENGTH-1)
 
+#define ASYM_VOLT_TABLE_SIZE 100
+#define ASYM_VOLT_STEP_MV (25000/ASYM_VOLT_TABLE_SIZE)
+
+typedef struct{
+	uint32_t voltage_tab[ASYM_VOLT_TABLE_SIZE];
+} ASYM_VOLTAGE_STRUCT;
+
 
 typedef struct{
 	uint8_t gpio_buffer[DMA_GPIO_BUFFER_LENGTH];

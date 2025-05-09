@@ -16,10 +16,10 @@ extern DMA_HandleTypeDef hdma_adc2;
 
 
 extern ADC_STRUCT Adc;
-extern ADC2_STRUCT Adc2;
 
 DMA_DCC_STRUCT Dma;
 
+ASYM_VOLTAGE_STRUCT Volt;
 
 void dma_init(void)
 {
@@ -84,6 +84,20 @@ void dma_adc2_callback_halffull(DMA_HandleTypeDef *hdma)
 {
   if (hdma == &hdma_adc2)
   {
+  	uint32_t Uaysm_mV = 0;
+		for(uint32_t i=0;i<(ADC2_DMA_BUFFER_LENGTH/2);i++)
+		{
+			Uaysm_mV = (((Adc.asym_volt_tab[i] * 3300)/4096)*93)/10;
+
+			uint32_t Uaysm_idx = Uaysm_mV / ASYM_VOLT_STEP_MV;
+
+			if(Uaysm_idx >= ASYM_VOLT_TABLE_SIZE)
+				Uaysm_idx = ASYM_VOLT_TABLE_SIZE;
+
+			Volt.voltage_tab[Uaysm_idx]++;
+		}
+		Adc.Uasym_mV = Uaysm_mV;
+
     //GPIO_WRITE(CAB_LIGHT, TRUE);
     //adc_update();
     //GPIO_WRITE(CAB_LIGHT, FALSE);
@@ -95,6 +109,20 @@ void dma_adc2_callback_full(DMA_HandleTypeDef *hdma)
 {
   if (hdma == &hdma_adc2)
   {
+  	uint32_t Uaysm_mV = 0;
+		for(uint32_t i=(ADC2_DMA_BUFFER_LENGTH/2);i<ADC2_DMA_BUFFER_LENGTH;i++)
+		{
+			Uaysm_mV = (((Adc.asym_volt_tab[i] * 3300)/4096)*93)/10;
+
+			uint32_t Uaysm_idx = Uaysm_mV / ASYM_VOLT_STEP_MV;
+
+			if(Uaysm_idx >= ASYM_VOLT_TABLE_SIZE)
+				Uaysm_idx = ASYM_VOLT_TABLE_SIZE;
+
+			Volt.voltage_tab[Uaysm_idx]++;
+		}
+		Adc.Uasym_mV = Uaysm_mV;
+
     //GPIO_WRITE(CAB_LIGHT, TRUE);
     //adc_update();
     //GPIO_WRITE(CAB_LIGHT, FALSE);
@@ -106,9 +134,7 @@ void dma2_adc1_callback_full(DMA_HandleTypeDef *hdma)
 {
   if (hdma == &hdma_adc1)
   {
-    //GPIO_WRITE(CAB_LIGHT, TRUE);
-    adc_update();
-    //GPIO_WRITE(CAB_LIGHT, FALSE);
+  	adc1_update_irq();
   }
 }
 
