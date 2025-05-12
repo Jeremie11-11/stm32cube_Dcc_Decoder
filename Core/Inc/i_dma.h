@@ -19,7 +19,8 @@
 #define ASYM_VOLT_STEP_MV (25000/ASYM_VOLT_TABLE_SIZE)
 
 typedef struct{
-	uint32_t voltage_tab[ASYM_VOLT_TABLE_SIZE];
+	uint32_t voltage_0_tab[ASYM_VOLT_TABLE_SIZE];
+	uint32_t voltage_1_tab[ASYM_VOLT_TABLE_SIZE];
 } ASYM_VOLTAGE_STRUCT;
 
 
