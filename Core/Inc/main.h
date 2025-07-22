@@ -34,6 +34,7 @@ extern "C" {
 #include "string.h"
 #include <m_counter.h>
 #include <m_debug.h>
+#include "i_gpio.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -61,6 +62,8 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define GPIO_Output___MCU_OPTL_Pin GPIO_PIN_2
+#define GPIO_Output___MCU_OPTL_GPIO_Port GPIOA
 
 /* USER CODE BEGIN Private defines */
 
@@ -94,83 +97,6 @@ typedef enum{
 	opt_light			= 1 << 3
 }light_t;
 
-struct RegPin {
-	GPIO_TypeDef* reg;
-	uint16_t pin;
-};
-
-#define LED1_GREEN {GPIOB, GPIO_PIN_14}
-#define LED2_RED {GPIOB, GPIO_PIN_15}
-#define TEST_PIN1 {GPIOB, GPIO_PIN_10}
-//#define TEST_PIN2 {GPIOA, GPIO_PIN_3}
-
-#define FRONT_LIGHT {GPIOC, GPIO_PIN_14}
-#define CAB_LIGHT {GPIOC, GPIO_PIN_15}
-#define REAR_LIGHT {GPIOH, GPIO_PIN_0}
-#define OPT_LIGHT {GPIOA, GPIO_PIN_12}
-
-#define PIN_CURRENT_EN {GPIOC, GPIO_PIN_13}	// PIN to enable higher input current
-
-// GPIO_WRITE(GREEN_LED, TRUE);
-#define GPIO_WRITE(signal, state) \
-    do { \
-        struct RegPin s = signal; \
-        if (state) { \
-            s.reg->BSRR = (uint32_t)(s.pin);  /* Set pin to 1 */ \
-        } else { \
-            s.reg->BSRR = (uint32_t)(s.pin << 16); /* Set pin to 0 */ \
-        } \
-    } while(0)
-
-// GPIO_READ(GREEN_LED);
-#define GPIO_READ(signal) \
-    ({ \
-        struct RegPin s = signal; \
-        (s.reg->IDR & s.pin) ? 1 : 0;  /* Return pin state (1 or 0) */ \
-    })
-
-// GPIO_TOGGLE(GREEN_LED);
-#define GPIO_TOGGLE(signal) \
-    do { \
-        struct RegPin s = signal; \
-        s.reg->ODR ^= s.pin;  /* Inverse pin state */ \
-    } while(0)
-
-#define GPIO_CONFIG_OUTPUT(signal) \
-    do { \
-        struct RegPin s = signal; \
-        uint32_t pin_number = __builtin_ctz(s.pin); \
-        uint32_t temp = s.reg->MODER; \
-        temp &= ~(GPIO_MODER_MODE0_Msk << (pin_number * 2));  /* Effacer le mode actuel de la pin */ \
-        temp |= (GPIO_MODE_OUTPUT_PP << (pin_number * 2));    /* Configurer en mode sortie push-pull */ \
-        s.reg->MODER = temp;                                  /* Écrire la configuration dans le registre MODER */ \
-        s.reg->OTYPER &= ~(GPIO_OTYPER_OT0 << pin_number);    /* Mettre à 0 le bit dans OTYPER (Push-Pull) */ \
-    } while(0)
-
-#define GPIO_CONFIG_INPUT(signal) \
-    do { \
-        struct RegPin s = signal; \
-        uint32_t pin_number = __builtin_ctz(s.pin); \
-        uint32_t temp = s.reg->MODER; \
-        temp &= ~(GPIO_MODER_MODE0_Msk << (pin_number * 2));  /* Effacer le mode actuel de la pin (00 = Entrée) */ \
-        s.reg->MODER = temp;                                  /* Écrire la configuration dans le registre MODER */ \
-        temp = s.reg->PUPDR; \
-        temp &= ~(GPIO_PUPDR_PUPD0_Msk << (pin_number * 2));  /* Effacer pull-up et pull-down (00 = Pas de pull) */ \
-        s.reg->PUPDR = temp;                                  /* Écrire la configuration dans le registre PUPDR */ \
-    } while(0)
-
-#define GPIO_CONFIG_OPEN_DRAIN(signal) \
-    do { \
-        struct RegPin s = signal; \
-        uint32_t pin_number = __builtin_ctz(s.pin); \
-        uint32_t temp = s.reg->MODER; \
-        temp &= ~(GPIO_MODER_MODE0_Msk << (pin_number * 2)); \
-        temp |= (GPIO_MODE_OUTPUT_OD << (pin_number * 2)); \
-        s.reg->MODER = temp; \
-        temp = s.reg->OTYPER; \
-        temp |= (GPIO_OTYPER_OT0 << pin_number); \
-        s.reg->OTYPER = temp; \
-    } while(0)
 
 /* USER CODE END Private defines */
 

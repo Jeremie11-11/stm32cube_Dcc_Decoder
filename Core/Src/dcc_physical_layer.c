@@ -12,10 +12,17 @@
 DCC_PROTOCOL_STRUCT DccTx;
 DCC_PROTOCOL_STRUCT DccRx;
 
-extern DMA_DCC_STRUCT Dma;
+extern DMA_STRUCT Dma;
+DCC_PHYSICAL_LAYER_STRUCT Dma_Struct;
 
 
 DCC_DEBUG_STRUCT DccDebug;
+
+
+void dcc_init(void)
+{
+	DccDebug.recieved_msg = 0;
+}
 
 
 inline static void dcc_tx_set_zero(void)
@@ -32,84 +39,57 @@ inline static void dcc_tx_set_one(void)
 }
 
 
-void dcc_init(void)
+void dcc_tx_update(void)
 {
-	DccDebug.recieved_msg = 0;
 
 }
 
 
-void dcc_tx_update(void)
+void dcc_dma_update(uint32_t buffer_full)
 {
-	uint8_t val;
+	uint32_t start_index, stop_index;
+	uint32_t val;
 
-	if(DccTx.preamble_i > 0)
+	// Set the start/stop index for the loop
+	if(buffer_full == FALSE)
 	{
-		// ----- Preamble -----
-		DccTx.preamble_i--;
-		DccTx.bit_i = 255;
-		DccTx.byte_i = 0;
-
-		dcc_tx_set_one();
+		start_index = 0;
+		stop_index = DMA_DCC_BUFFER_LENGTH/2;
 	}
 	else
 	{
-		if(DccTx.bit_i >= 8)
+		start_index = DMA_DCC_BUFFER_LENGTH/2;
+		stop_index = DMA_DCC_BUFFER_LENGTH;
+	}
+
+	// Loop to go through the buffer (half of the buffer)
+	for(uint32_t i=start_index;i<stop_index;i++)
+	{
+		val = (Dma.dcc_gpio_buffer[i] >> 6) & 0x01;
+		Dma_Struct.val[Dma_Struct.val_idx++] = val;
+		if(Dma_Struct.val_idx >= 3)
+			Dma_Struct.val_idx=0;
+
+		if((Dma_Struct.val[0]+Dma_Struct.val[1]+Dma_Struct.val[2]) >= 2)
 		{
-
-			// Next byte of the message
-			if(DccTx.bit_i != 255)
-				DccTx.byte_i++;
-
-			if(DccTx.byte_i >= DccTx.msg[DccTx.msg_out_i].len)
+			if(Dma_Struct.t_low > 0)
 			{
-				// ----- End of message -----
-				DccTx.preamble_i = 86;
-
-
-				if(DccTx.sent_nbr > 0)
-					// Repeat the same message
-					DccTx.sent_nbr--;
-				else
-				{
-					// Check for the next message
-					if(DccTx.msg_out_i != DccTx.msg_in_i)
-					{
-						// ----- Get next queued message -----
-						DccTx.msg[DccTx.msg_out_i].len = 0;
-
-						DccTx.msg_out_i = (DccTx.msg_out_i + 1) & (DCC_MAX_MESSAGES_QUEUE-1);
-					}
-
-					DccTx.sent_nbr = DCC_MSG_REPEATED_TIME;
-				}
-
-				// End bit
-				dcc_tx_set_one();
+				Dma_Struct.time_buffer[Dma_Struct.idx_in] = Dma_Struct.t_low;
+				Dma_Struct.idx_in = (Dma_Struct.idx_in+1) & DMA_TIME_IDX_MASK;
 			}
-			else
-			{
-				// ----- Next byte -----
-				DccTx.bit_i = 0;
-
-				// Start bit
-				dcc_tx_set_zero();
-			}
+			Dma_Struct.t_high++;
+			Dma_Struct.t_low=0;
 		}
 		else
 		{
-			// ----- Next bit of the byte -----
-			val = (DccTx.msg[DccTx.msg_out_i].data[DccTx.byte_i] << DccTx.bit_i) & 0x80;
-
-			if(val == 0)
-				dcc_tx_set_zero();
-			else
-				dcc_tx_set_one();
-
-			DccTx.bit_i++;
+			if(Dma_Struct.t_high > 0)
+			{
+				Dma_Struct.time_buffer[Dma_Struct.idx_in] = Dma_Struct.t_high;
+				Dma_Struct.idx_in = (Dma_Struct.idx_in+1) & DMA_TIME_IDX_MASK;
+			}
+			Dma_Struct.t_low++;
+			Dma_Struct.t_high=0;
 		}
-
-
 	}
 }
 
@@ -120,9 +100,9 @@ void dcc_rx_update(void)
 	static uint32_t val1;
 	static uint8_t byte, byte_xor;
 
-	while(Dma.idx_out0 != Dma.idx_in)
+	while(Dma_Struct.idx_out0 != Dma_Struct.idx_in)
 	{
-		val = Dma.time_buffer[Dma.idx_out0] + Dma.time_buffer[Dma.idx_out1];
+		val = Dma_Struct.time_buffer[Dma_Struct.idx_out0] + Dma_Struct.time_buffer[Dma_Struct.idx_out1];
 
 		if(DccRx.preamble_i > 1)
 		{
@@ -250,8 +230,8 @@ void dcc_rx_update(void)
 		}
 
 		val1 = val;
-		Dma.idx_out1 = Dma.idx_out0;
-		Dma.idx_out0 = (Dma.idx_out0+1) & DMA_TIME_IDX_MASK;
+		Dma_Struct.idx_out1 = Dma_Struct.idx_out0;
+		Dma_Struct.idx_out0 = (Dma_Struct.idx_out0+1) & DMA_TIME_IDX_MASK;
 	}
 }
 

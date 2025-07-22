@@ -14,7 +14,10 @@
 #define DCC_MAX_MESSAGES_QUEUE 16	// Has to be a power of 2
 
 // How many time a message has to be sent
-#define DCC_MSG_REPEATED_TIME 100
+//#define DCC_MSG_REPEATED_TIME 100
+
+#define DMA_TIME_BUFFER_LENGTH 128
+#define DMA_TIME_IDX_MASK (DMA_TIME_BUFFER_LENGTH-1)
 
 
 #define DCC_RX_PREAMBLE_INIT 21
@@ -22,6 +25,20 @@
 #define DCC_RX_ZERO_HIGH 22
 #define DCC_RX_ONE_LOW 10
 #define DCC_RX_ONE_HIGH 14
+
+
+typedef struct{
+	//uint8_t gpio_buffer[DMA_DCC_BUFFER_LENGTH];
+	uint32_t val[3];
+	uint32_t val_idx;
+	uint32_t t_low;
+	uint32_t t_high;
+
+	uint32_t idx_in;
+	uint32_t idx_out0;
+	uint32_t idx_out1;
+	uint8_t time_buffer[DMA_TIME_BUFFER_LENGTH];
+} DCC_PHYSICAL_LAYER_STRUCT;
 
 
 typedef struct{
@@ -54,6 +71,8 @@ typedef struct{
 void dcc_init(void);
 
 void dcc_tx_update(void);
+
+void dcc_dma_update(uint32_t buffer_full);
 
 void dcc_rx_update(void);
 

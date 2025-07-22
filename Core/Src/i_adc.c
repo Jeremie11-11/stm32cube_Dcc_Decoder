@@ -7,6 +7,7 @@
 
 #include <dcc_protocol_rx.h>
 #include <i_adc.h>
+#include <i_dma.h>
 #include "motor.h"
 #include <string.h>
 #include "stm32l4xx_hal_adc.h"
@@ -14,6 +15,10 @@
 extern ADC_HandleTypeDef hadc1;
 extern ADC_HandleTypeDef hadc2;
 extern DMA_HandleTypeDef hdma_adc1;
+
+
+extern DMA_STRUCT Dma;
+
 
 ADC_STRUCT Adc;
 ADC_DEBUG_STRUCT AdcDebug;
@@ -27,8 +32,6 @@ extern DCC_INSTRUCTION_STRUCT DccInst;
 
 void adc_init(void)
 {
-	//Adc.val_cnt = ADC_NUMBER_OF_MEASURE;
-
 	AdcDebug.val_idx = 0;
 	AdcDebug.current_idx = 0;
 
@@ -59,18 +62,9 @@ void adc_init(void)
 
 	HAL_ADC_Start(&hadc2);
 }
-/*
-void adc_SetExternalTrigger(ADC_HandleTypeDef *hadc, uint32_t trigger)
-{
-    hadc->Init.ExternalTrigConv = trigger;
-    if (HAL_ADC_Init(hadc) != HAL_OK)
-    {
-        Error_Handler();
-    }
-}
-*/
 
-void adc1_update_irq(void)
+
+void adc_measure_update(void)
 {
 	static int32_t val_cnt = ADC_NBR_MEASURE_FOR_AVERAGE;
 
@@ -78,9 +72,9 @@ void adc1_update_irq(void)
 	static uint32_t Usupply_sum=0;
 	static int32_t temp_sum=0;
 
-	Ibridge_sum += Adc.adc1_meas.data.Ibridge_raw;
-	Usupply_sum += Adc.adc1_meas.data.Usupply_raw;
 
+	Ibridge_sum += Dma.adc1_measure_buffer.data.Ibridge_raw;
+	Usupply_sum += Dma.adc1_measure_buffer.data.Usupply_raw;
 
 	if(val_cnt <= 0)
 	{
@@ -133,7 +127,7 @@ void adc1_update_irq(void)
 		//Adc.temp = (((temp_sum/ADC_NUMBER_OF_MEASURE)-AdcDebug.ts_cal1)*(TS_CAL2_TEMP – TS_CAL1_TEMP))/(AdcDebug.ts_cal2-AdcDebug.ts_cal1)+30;
 		Adc.Temp_dC = (((temp_sum/ADC_NBR_MEASURE_FOR_AVERAGE)-AdcDebug.ts_cal1)*100)/(AdcDebug.ts_cal2-AdcDebug.ts_cal1)+30;
 
-		AdcDebug.val1[AdcDebug.val_idx] = Adc.adc1_meas.data.Ibridge_raw;
+		AdcDebug.val1[AdcDebug.val_idx] = Dma.adc1_measure_buffer.data.Ibridge_raw;
 		AdcDebug.val2[AdcDebug.val_idx] = Ibridge_sum/ADC_NBR_MEASURE_FOR_AVERAGE;
 		AdcDebug.val_idx = (AdcDebug.val_idx+1) & 0x1F;
 
@@ -153,37 +147,3 @@ void adc1_update_irq(void)
 }
 
 
-uint16_t adc_get_current(void)
-{
-	//uint32_t i, idx, adc_current=0;
-/*
-	idx = Adc.val_idx;
-
-	if(idx > 0)
-	{
-		for(i=0; i<idx; i++)
-		{
-			adc_current += Adc.val[Adc.val_idx];
-		}
-
-		adc_current /= idx;
-
-		// R=1 Ohm, 12 bits ADC, current in mA
-		adc_current = (adc_current * 3300)/4096;
-
-		Adc.current_tab[Adc.current_i] = adc_current;
-		Adc.current_i = (Adc.current_i + 1) & 0x1F;
-
-		Adc.current = adc_current;
-
-		Adc.val_idx = 0;
-
-		return adc_current;
-	}
-	else
-	{
-		return 33333;
-	}
-	*/
-	return 0;
-}
