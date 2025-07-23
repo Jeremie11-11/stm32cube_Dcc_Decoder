@@ -62,8 +62,6 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define GPIO_Output___MCU_OPTL_Pin GPIO_PIN_2
-#define GPIO_Output___MCU_OPTL_GPIO_Port GPIOA
 
 /* USER CODE BEGIN Private defines */
 
