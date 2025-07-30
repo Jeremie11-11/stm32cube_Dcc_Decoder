@@ -65,6 +65,38 @@ void mot_speed_update(void)
 	// Reload the counter
 	cnt_start(COUNTER_MOTOR_SPEED_UPDATE, 200);
 
+
+
+	if(DccInst.signal_state == signal_red)
+	{
+		// RED signal: Stopping
+		DccInst.target_speed = 0;
+	}
+	else if(DccInst.signal_state == signal_orange)
+	{
+		// ORANGE signal: Speed limitation
+		if(DccInst.dcc_target_speed >= 0)
+		{
+			if(DccInst.dcc_target_speed > 5)
+				DccInst.target_speed = 5;
+			else
+				DccInst.target_speed = DccInst.dcc_target_speed;
+		}
+		else
+		{
+			if(DccInst.dcc_target_speed < -5)
+				DccInst.target_speed = -5;
+			else
+				DccInst.target_speed = DccInst.dcc_target_speed;
+		}
+	}
+	else
+	{
+		// GREEN signal: Do not limit the speed
+		DccInst.target_speed = DccInst.dcc_target_speed;
+	}
+
+
 	if(DccInst.emergency_stop != 0)
 	{
 
@@ -74,8 +106,11 @@ void mot_speed_update(void)
 	{
 		// ----- Open loop speed control -----
 		if((DccInst.actual_speed * DccInst.target_speed > 0) || (DccInst.actual_speed == 0))
-			DccInst.actual_speed = DccInst.target_speed;
+		{
+				DccInst.actual_speed = DccInst.target_speed;
+		}
 		else
+			// Changing direction
 			DccInst.actual_speed = 0;
 	}
 	// ----- Close loop speed control -----

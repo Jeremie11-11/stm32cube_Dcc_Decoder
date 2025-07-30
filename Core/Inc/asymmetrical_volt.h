@@ -11,7 +11,7 @@
 
 #include "main.h"
 
-#define ASYM_DEBUG FALSE
+#define ASYM_DEBUG TRUE
 #define ASYM_VOLT_TABLE_SIZE 100
 #define ASYM_VOLT_STEP_MV (25000/ASYM_VOLT_TABLE_SIZE)
 

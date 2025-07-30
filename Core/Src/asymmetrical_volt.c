@@ -10,6 +10,9 @@
 #include "i_dma.h"
 #include "i_adc.h"
 
+#if ASYM_DEBUG
+#include "dcc_protocol_rx.h"
+#endif
 
 extern ADC_STRUCT Adc;
 extern DMA_STRUCT Dma;
@@ -18,6 +21,7 @@ ASYM_VOLTAGE_STRUCT Asym;
 
 #if ASYM_DEBUG
 ASYM_DEBUG_STRUCT AsymDebug;
+extern DCC_INSTRUCTION_STRUCT DccInst;
 #endif
 
 
@@ -84,6 +88,8 @@ void asym_dma_update(uint32_t buffer_full)
 		AsymDebug.debug_tab1[AsymDebug.debug_index] = Uaysm_idx;
 		if(AsymDebug.debug_index<200)
 			AsymDebug.debug_index++;
+		else if(DccInst.dcc_target_speed != 0)
+			AsymDebug.debug_index=0;
 #endif
 	}
 	Asym.Uasym_mV = Asym.Utrack0_mV - Asym.Utrack1_mV;
@@ -95,16 +101,21 @@ void asym_check_for_signal(void)
 	if(Asym.Uasym_mV > 3000)
 	{
 		// ---------- RED signal ----------
+		DccInst.signal_state = signal_red;
 
 	}
 	else if(Asym.Uasym_mV > 800)
 	{
 		// ---------- ORANGE signal ----------
+		DccInst.signal_state = signal_orange;
+
 		GPIO_WRITE(OPT_LIGHT, TRUE);
 	}
 	else
 	{
 		// ---------- GREEN signal ----------
+		DccInst.signal_state = signal_green;
+
 		GPIO_WRITE(OPT_LIGHT, FALSE);
 	}
 }

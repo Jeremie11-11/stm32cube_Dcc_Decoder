@@ -155,7 +155,7 @@ void dcc_check_for_new_messages(void)
 	if(msg.inst == speed_dir_inst_forward)
 	{
 		if(msg.nb_data >= 1) {
-			DccInst.target_speed = msg.speed;
+			DccInst.dcc_target_speed = msg.speed;
 			DccInst.emergency_stop = msg.emergency;
 		}
 
@@ -163,7 +163,7 @@ void dcc_check_for_new_messages(void)
 			DccInst.functions = msg.fct;
 
 		// Update direction if motor is stopped
-		if((DccInst.target_speed == 0) && (DccInst.actual_speed == 0))
+		if((DccInst.dcc_target_speed == 0) && (DccInst.actual_speed == 0))
 			DccInst.actual_dir = DIR_FORWARDS;
 
 		//dcc_update_functions();
@@ -171,7 +171,7 @@ void dcc_check_for_new_messages(void)
 	else if(msg.inst == speed_dir_inst_reverse)
 	{
 		if(msg.nb_data >= 1) {
-			DccInst.target_speed = -msg.speed;
+			DccInst.dcc_target_speed = -msg.speed;
 			DccInst.emergency_stop = msg.emergency;
 		}
 
@@ -179,7 +179,7 @@ void dcc_check_for_new_messages(void)
 			DccInst.functions = msg.fct;
 
 		// Update direction if motor is stopped
-		if((DccInst.target_speed == 0) && (DccInst.actual_speed == 0))
+		if((DccInst.dcc_target_speed == 0) && (DccInst.actual_speed == 0))
 			DccInst.actual_dir = DIR_BACKWARDS;
 
 		//dcc_update_functions();

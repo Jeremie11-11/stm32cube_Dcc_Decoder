@@ -27,6 +27,12 @@ typedef enum{
 	config_variable_inst = 7,
 }inst_type_enum;
 
+typedef enum{
+	signal_red = 0,
+	signal_orange = 1,
+	signal_green = 2
+}signal_state_t;
+
 typedef struct{
 	uint8_t nb_data;
 	uint16_t addr;
@@ -39,7 +45,9 @@ typedef struct{
 } DCC_MESSAGE_STRUCT;
 
 typedef struct{
-	int8_t target_speed;			// Target without ramp
+	signal_state_t signal_state;
+	int8_t dcc_target_speed;	// Target speed received from DCC
+	int8_t target_speed;			// Target speed based on DCC target speed and signal state
 	int8_t actual_speed;			// Speed reference for motor control with ramp
 	dir_t actual_dir;					// Used for the lights (following moving directions)
 	uint8_t functions;				// Byte where the function are stored(F
