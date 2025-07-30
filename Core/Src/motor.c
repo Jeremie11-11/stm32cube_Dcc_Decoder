@@ -42,13 +42,13 @@ static void mot_current_source(uint32_t state)
 	if(state == ENABLE)
 	{
 		// Set PIN as push-pull to high state
-		GPIO_CONFIG_OUTPUT(PIN_CURRENT_EN);
+		//GPIO_CONFIG_OUTPUT(PIN_CURRENT_EN);
 		GPIO_WRITE(PIN_CURRENT_EN, TRUE);
 	}
 	else
 	{
 		// Set PIN as push-pull to low state
-		GPIO_CONFIG_OUTPUT(PIN_CURRENT_EN);
+		//GPIO_CONFIG_OUTPUT(PIN_CURRENT_EN);
 		GPIO_WRITE(PIN_CURRENT_EN, FALSE);
 	}
 }
@@ -133,7 +133,7 @@ void mot_speed_update(void)
 			DccInst.actual_dir = DIR_FORWARDS;
 
 			// Set lights (depending on direction)
-			dcc_update_functions();
+			//dcc_update_functions();
 
 			// Set H-brige
 			tim_set_motor_bridge(DIR_FORWARDS);
@@ -148,7 +148,7 @@ void mot_speed_update(void)
 			DccInst.actual_dir = DIR_BACKWARDS;
 
 			// Set lights (depending on direction)
-			dcc_update_functions();
+			//dcc_update_functions();
 
 			// Set H-brige
 			tim_set_motor_bridge(DIR_BACKWARDS);
@@ -286,12 +286,6 @@ void mot_pwm_update(void)
 		Motor.ccr = PWM_MAX;
 	else if(Motor.ccr <= PWM_MIN)
 		Motor.ccr = PWM_MIN;
-
-	if(Adc.under_voltage == TRUE)
-	{
-		Motor.Unew_mV = 0;
-		Motor.ccr = 0;
-	}
 
 	//tim_set_motor_pwm(DccInst.actual_dir, Motor.ccr);
 

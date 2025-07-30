@@ -166,7 +166,7 @@ void dcc_check_for_new_messages(void)
 		if((DccInst.target_speed == 0) && (DccInst.actual_speed == 0))
 			DccInst.actual_dir = DIR_FORWARDS;
 
-		dcc_update_functions();
+		//dcc_update_functions();
 	}
 	else if(msg.inst == speed_dir_inst_reverse)
 	{
@@ -182,7 +182,7 @@ void dcc_check_for_new_messages(void)
 		if((DccInst.target_speed == 0) && (DccInst.actual_speed == 0))
 			DccInst.actual_dir = DIR_BACKWARDS;
 
-		dcc_update_functions();
+		//dcc_update_functions();
 	}
 	else if(msg.inst == config_variable_inst)
 	{
@@ -206,7 +206,7 @@ void dcc_check_for_new_messages(void)
 	DccRx.msg_out_i = (DccRx.msg_out_i + 1) & (DCC_MAX_MESSAGES_QUEUE-1);
 
 }
-
+/*
 void dcc_update_functions(void)
 {
 	if(Adc.under_voltage == TRUE)
@@ -242,6 +242,6 @@ void dcc_update_functions(void)
 		tim_set_light(cab_light, DccInst.functions);
 		tim_set_light(opt_light, DccInst.functions);
 	}
-}
+}*/
 
 

@@ -14,13 +14,10 @@
 #define ADC_NBR_MEASURE_FOR_AVERAGE 512
 
 typedef struct{
-
 	uint32_t Usupply_mV;	// Power supply voltage
 	uint32_t Uin_mV;			// Voltage motor (Usupply - Rds_on * Ibridge)
 	uint32_t Ibridge_mA;
-
-	int32_t Temp_dC;
-	uint32_t under_voltage: 1;
+	int32_t Temp_C;
 } ADC_STRUCT;
 
 
@@ -28,6 +25,8 @@ typedef struct{
 typedef struct{
 	uint16_t ts_cal1;
 	uint16_t ts_cal2;
+	int32_t ts_slope;
+
 	uint16_t val1[32];
 	uint16_t val2[32];
 	uint32_t val_idx;
