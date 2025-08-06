@@ -15,11 +15,14 @@ typedef enum{
     COUNTER_UNIVERSAL1 = 0,
     COUNTER_UNIVERSAL2,
 
+		// Counters for the status LEDS
+		COUNTER_DCC_RX_TIMEOUT,
+		COUNTER_LED_STATUS_RED,
+
+		// Counters for the motor
 		COUNTER_MOTOR_SPEED_UPDATE,
 		COUNTER_MOTOR_SPEED1_TIMEOUT,
 		COUNTER_MOTOR_SLOW_START,
-		COUNTER_DCC_RX_TIMEOUT,
-		COUNTER_LED_RED,
 
 		NBR_COUNTERS	// Variable used to get the number of declared counter
 } counters_enum;
@@ -32,7 +35,7 @@ typedef struct{
 
 void cnt_start(counters_enum cnt_idx, uint32_t time_ms);
 
-void cnt_start_if_not(counters_enum cnt_idx, uint32_t time_ms);
+void cnt_start_or_extend(counters_enum cnt_idx, uint32_t time_ms);
 
 uint32_t cnt_read(counters_enum cnt_idx);
 

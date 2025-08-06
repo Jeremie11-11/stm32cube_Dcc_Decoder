@@ -132,7 +132,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   mem_init();
-  dbg_set_error_led(LED_BOOT_EVENT, 1000);
+  debug_set_led_status_red(LED_BOOT_EVENT, 1000);
 
   mot_init();
   dcc_init();
@@ -151,7 +151,7 @@ int main(void)
   	// TEST_PIN1 is toggled each loop.
   	GPIO_TOGGLE(TEST_PIN1);
 
-  	dbg_leds_update();
+  	debug_leds_update();
 
   	asym_check_for_signal();
 

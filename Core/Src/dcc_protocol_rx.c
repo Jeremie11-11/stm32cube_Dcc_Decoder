@@ -123,7 +123,7 @@ void dcc_check_for_new_messages(void)
 
 	// Led green blinking(5Hz) when communication is working
 	if((DccDebug.recieved_msg%40) == 0)
-		dbg_toggle_green_led(LED_DCC_COM, 2000);
+		debug_toggle_led_status_green(LED_DCC_COM, 2000);
 
 	buffer = DccRx.msg[DccRx.msg_out_i].data;
 	len = DccRx.msg[DccRx.msg_out_i].len;
@@ -138,7 +138,7 @@ void dcc_check_for_new_messages(void)
 
 	// Led green blinking(20ms ON) when dedicated message received
 	DccDebug.recieved_msg = 1;
-	dbg_set_green_led(LED_DCC_COM, 20);
+	debug_set_led_status_green(LED_DCC_COM, 20);
 
 	// Check for new content
 	if(msg_with_new_content(buffer, len) == FALSE)
@@ -198,7 +198,7 @@ void dcc_check_for_new_messages(void)
 				mem_write_config();
 				mem_read_config();
 
-				dbg_set_error_led(LED_MEM_WRITE, 50);
+				debug_set_led_status_red(LED_MEM_WRITE, 50);
 			}
 		}
 	}

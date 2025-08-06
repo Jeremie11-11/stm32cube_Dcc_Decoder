@@ -32,8 +32,12 @@ extern "C" {
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "string.h"
+#include "stdio.h"
+#include "stdlib.h"
+#include "define.h"
+#include "version.h"
 #include <m_counter.h>
-#include <m_debug.h>
+#include <debug.h>
 #include "i_gpio.h"
 /* USER CODE END Includes */
 
@@ -64,36 +68,6 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 
 /* USER CODE BEGIN Private defines */
-
-#define FALSE 0U
-#define TRUE 1U
-#define DISABLE 0U
-#define ENABLE 1U
-
-
-typedef enum{
-	_DISABLE = 0,
-	_ENABLE = 1
-} enable_t;
-
-typedef enum{
-	DIR_FORWARDS = 0,
-	DIR_BACKWARDS = 1,
-	DIR_STOPPED = 2
-}dir_t;
-
-typedef enum{
-	CTRL_OPEN_LOOP = 0,
-	CTRL_CLOSE_LOOP = 1
-}motor_ctrl_t;
-
-
-typedef enum{
-	front_light 	= 1 << 0,
-	cab_light 		= 1 << 1,
-	rear_light 		= 1 << 2,
-	opt_light			= 1 << 3
-}light_t;
 
 
 /* USER CODE END Private defines */

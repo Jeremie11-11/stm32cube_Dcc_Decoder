@@ -21,7 +21,7 @@ void cnt_start(counters_enum cnt_idx, uint32_t time_ms)
 }
 
 // Use to re-start a counter only if smaller
-void cnt_start_if_not(counters_enum cnt_idx, uint32_t time_ms)
+void cnt_start_or_extend(counters_enum cnt_idx, uint32_t time_ms)
 {
   if(cnt_idx < NBR_COUNTERS) {
       __disable_irq();  // Disable interrupts

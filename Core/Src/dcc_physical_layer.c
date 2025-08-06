@@ -142,7 +142,7 @@ void dcc_rx_update(void)
 				DccRx.preamble_i = DCC_RX_PREAMBLE_INIT;
 				DccDebug.first_start_error++;
 
-			  dbg_set_error_led(LED_DCC_COM_ERRORS, 20);
+			  debug_set_led_status_red(LED_DCC_COM_ERRORS, 20);
 			}
 		}
 		else
@@ -159,7 +159,7 @@ void dcc_rx_update(void)
 					DccRx.preamble_i = DCC_RX_PREAMBLE_INIT;
 					DccDebug.bit_size_error++;
 
-				  dbg_set_error_led(LED_DCC_COM_ERRORS, 20);
+				  debug_set_led_status_red(LED_DCC_COM_ERRORS, 20);
 				}
 				else if(DccRx.bit_i == 1)
 				{
@@ -173,7 +173,7 @@ void dcc_rx_update(void)
 						DccRx.preamble_i = DCC_RX_PREAMBLE_INIT;
 						DccDebug.msg_len_error++;
 
-					  dbg_set_error_led(LED_DCC_COM_ERRORS, 20);
+					  debug_set_led_status_red(LED_DCC_COM_ERRORS, 20);
 					}
 
 					if((val >= DCC_RX_ZERO_LOW) && (val <= DCC_RX_ZERO_HIGH))
@@ -189,7 +189,7 @@ void dcc_rx_update(void)
 							DccRx.preamble_i = DCC_RX_PREAMBLE_INIT;
 							DccDebug.xor_error++;
 
-							dbg_set_error_led(LED_DCC_COM_ERRORS, 20);
+							debug_set_led_status_red(LED_DCC_COM_ERRORS, 20);
 						}
 						else if(DccRx.byte_i < 3)
 						{
@@ -197,7 +197,7 @@ void dcc_rx_update(void)
 							DccRx.preamble_i = DCC_RX_PREAMBLE_INIT;
 							DccDebug.msg_len_error++;
 
-							dbg_set_error_led(LED_DCC_COM_ERRORS, 20);
+							debug_set_led_status_red(LED_DCC_COM_ERRORS, 20);
 						}
 						else
 						{
