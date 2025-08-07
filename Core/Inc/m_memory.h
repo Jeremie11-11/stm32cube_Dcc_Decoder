@@ -13,7 +13,8 @@
 
 // Page 0-63 available, 64 * 2k = 128k flash
 #define PAGE_MOTOR_START 32
-#define PAGE_MOTOR_END 61
+#define PAGE_MOTOR_END 48
+#define PAGE_ASYM_VOLTAGE 49
 #define PAGE_MOTOR_STATUS 62
 #define PAGE_CONFIG 63
 
@@ -71,8 +72,18 @@ struct MEM_MOTOR_DATA_STRUCT{
 	int16_t Unew_mV[256];
 } __attribute__ ((packed));
 
+struct MEM_ASYM_VOLATGE_STRUCT{
+	int16_t Uw_mV[256];
+	int16_t Ux_mV[256];
+	int16_t Uy_mV[256];
+	int16_t Uz_mV[256];
+} __attribute__ ((packed));
 
 void mem_init(void);
+
+void mem_write_page(uint32_t page, void *memory, uint32_t memory_size);
+
+void mem_read_page(uint32_t page, void *memory, uint32_t memory_size);
 
 void mem_read_config(void);
 
@@ -80,8 +91,6 @@ void mem_write_config(void);
 
 void mem_write_motor(void);
 
-void mem_write_page(uint32_t page, void *memory, uint32_t memory_size);
-
-void mem_read_page(uint32_t page, void *memory, uint32_t memory_size);
+void mem_write_asym_data(void);
 
 #endif /* INC_M_MEMORY_H_ */

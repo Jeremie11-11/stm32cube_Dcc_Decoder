@@ -13,6 +13,7 @@
 struct MEM_CONFIG_STRUCT Mem;
 struct MEM_MOTOR_STATUS_STRUCT memMotStat;
 struct MEM_MOTOR_DATA_STRUCT memMotData;
+struct MEM_ASYM_VOLATGE_STRUCT memAsymData;
 
 extern DCC_INSTRUCTION_STRUCT DccInst;
 
@@ -57,49 +58,6 @@ void mem_init(void)
 
 		mem_read_config();
 	}
-}
-
-void mem_read_config(void)
-{
-	mem_read_page(PAGE_CONFIG, (void *)&Mem, sizeof(Mem));
-}
-
-void mem_write_config(void)
-{
-	mem_write_page(PAGE_CONFIG, (void *)&Mem, sizeof(Mem));
-
-	mem_read_page(PAGE_CONFIG, (void *)&Mem, sizeof(Mem));
-}
-
-void mem_write_motor(void)
-{
-
-	mem_read_page(PAGE_MOTOR_STATUS, (void *)&memMotStat, sizeof(memMotStat));
-
-	if(	(memMotStat.page_first_move < PAGE_MOTOR_START) ||
-			(memMotStat.page_first_move > PAGE_MOTOR_END) ||
-			(memMotStat.page_last_move < PAGE_MOTOR_START) ||
-			(memMotStat.page_last_move > PAGE_MOTOR_END))
-	{
-		memMotStat.page_first_move = PAGE_MOTOR_START;
-		memMotStat.page_last_move = PAGE_MOTOR_START;
-	}
-	else
-	{
-		memMotStat.page_last_move++;
-		if(memMotStat.page_last_move > PAGE_MOTOR_END)
-			memMotStat.page_last_move = PAGE_MOTOR_START;
-
-		if(memMotStat.page_last_move == memMotStat.page_first_move)
-		{
-			memMotStat.page_first_move++;
-			if(memMotStat.page_first_move > PAGE_MOTOR_END)
-				memMotStat.page_first_move = PAGE_MOTOR_START;
-		}
-	}
-
-	mem_write_page(memMotStat.page_last_move, (void *)&memMotData, sizeof(memMotData));
-	mem_write_page(PAGE_MOTOR_STATUS, (void *)&memMotStat, sizeof(memMotStat));
 }
 
 
@@ -154,3 +112,52 @@ void mem_read_page(uint32_t page, void *memory, uint32_t memory_size)
 }
 
 
+void mem_read_config(void)
+{
+	mem_read_page(PAGE_CONFIG, (void *)&Mem, sizeof(Mem));
+}
+
+
+void mem_write_config(void)
+{
+	mem_write_page(PAGE_CONFIG, (void *)&Mem, sizeof(Mem));
+
+	mem_read_page(PAGE_CONFIG, (void *)&Mem, sizeof(Mem));
+}
+
+
+void mem_write_motor(void)
+{
+	mem_read_page(PAGE_MOTOR_STATUS, (void *)&memMotStat, sizeof(memMotStat));
+
+	if(	(memMotStat.page_first_move < PAGE_MOTOR_START) ||
+			(memMotStat.page_first_move > PAGE_MOTOR_END) ||
+			(memMotStat.page_last_move < PAGE_MOTOR_START) ||
+			(memMotStat.page_last_move > PAGE_MOTOR_END))
+	{
+		memMotStat.page_first_move = PAGE_MOTOR_START;
+		memMotStat.page_last_move = PAGE_MOTOR_START;
+	}
+	else
+	{
+		memMotStat.page_last_move++;
+		if(memMotStat.page_last_move > PAGE_MOTOR_END)
+			memMotStat.page_last_move = PAGE_MOTOR_START;
+
+		if(memMotStat.page_last_move == memMotStat.page_first_move)
+		{
+			memMotStat.page_first_move++;
+			if(memMotStat.page_first_move > PAGE_MOTOR_END)
+				memMotStat.page_first_move = PAGE_MOTOR_START;
+		}
+	}
+
+	mem_write_page(memMotStat.page_last_move, (void *)&memMotData, sizeof(memMotData));
+	mem_write_page(PAGE_MOTOR_STATUS, (void *)&memMotStat, sizeof(memMotStat));
+}
+
+
+void mem_write_asym_data(void)
+{
+	mem_write_page(PAGE_ASYM_VOLTAGE, (void *)&memAsymData, sizeof(memAsymData));
+}

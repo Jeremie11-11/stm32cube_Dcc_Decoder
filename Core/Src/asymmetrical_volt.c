@@ -12,6 +12,7 @@
 
 #if ASYM_DEBUG
 #include "dcc_protocol_rx.h"
+#include "m_memory.h"
 #endif
 
 extern ADC_STRUCT Adc;
@@ -22,6 +23,7 @@ ASYM_VOLTAGE_STRUCT Asym;
 #if ASYM_DEBUG
 ASYM_DEBUG_STRUCT AsymDebug;
 extern DCC_INSTRUCTION_STRUCT DccInst;
+extern struct MEM_ASYM_VOLATGE_STRUCT memAsymData;
 #endif
 
 
@@ -32,6 +34,7 @@ void asym_dma_update(uint32_t buffer_full)
 	uint32_t dcc_state = 0;
 	static uint32_t dcc_state_old = 2;
 	static uint32_t dcc_state_old2 = 2;
+	static uint32_t dcc_state_old3 = 2;
 
 
 	if(buffer_full == FALSE)
@@ -55,7 +58,8 @@ void asym_dma_update(uint32_t buffer_full)
 		if(Uaysm_idx >= ASYM_VOLT_TABLE_SIZE)
 			Uaysm_idx = ASYM_VOLT_TABLE_SIZE;
 
-		if((dcc_state == dcc_state_old) && (dcc_state_old != dcc_state_old2))
+		//if((dcc_state == dcc_state_old) && (dcc_state_old != dcc_state_old2))
+		if((dcc_state == dcc_state_old2) && (dcc_state_old2 != dcc_state_old3))
 		{
 			if(dcc_state == 0)
 			{
@@ -80,13 +84,21 @@ void asym_dma_update(uint32_t buffer_full)
 #endif
 			}
 		}
+
+		dcc_state_old3 = dcc_state_old2;
 		dcc_state_old2 = dcc_state_old;
 		dcc_state_old = dcc_state;
 
 #if ASYM_DEBUG
-		AsymDebug.debug_tab0[AsymDebug.debug_index] = dcc_state;
-		AsymDebug.debug_tab1[AsymDebug.debug_index] = Uaysm_idx;
-		if(AsymDebug.debug_index<200)
+		memAsymData.Uw_mV[AsymDebug.debug_index] = dcc_state;
+		memAsymData.Ux_mV[AsymDebug.debug_index] = Uaysm_idx;
+		memAsymData.Uy_mV[AsymDebug.debug_index] = Asym.Utrack0_mV;
+		memAsymData.Uz_mV[AsymDebug.debug_index] = Asym.Utrack0_mV - Asym.Utrack1_mV;
+
+
+		//AsymDebug.debug_tab0[AsymDebug.debug_index] = dcc_state;
+		//AsymDebug.debug_tab1[AsymDebug.debug_index] = Uaysm_idx;
+		if(AsymDebug.debug_index<255)
 			AsymDebug.debug_index++;
 		else if(DccInst.dcc_target_speed != 0)
 			AsymDebug.debug_index=0;
@@ -104,7 +116,9 @@ void asym_check_for_signal(void)
 		DccInst.signal_state = signal_red;
 
 	}
-	else if(Asym.Uasym_mV > 800)
+	// Threshold based on measurement: (630mV + 360mV) / 2 = 445mV (2x same state)
+	// Threshold based on measurement: (540mV + 140mV) / 2 = 340mV (3x same state) <- More likely to detect the difference
+	else if(Asym.Uasym_mV > 340)
 	{
 		// ---------- ORANGE signal ----------
 		DccInst.signal_state = signal_orange;

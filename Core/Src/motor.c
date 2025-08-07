@@ -154,6 +154,7 @@ void mot_speed_update(void)
 
 			// Store start of the movement
 			mem_write_motor();
+			mem_write_asym_data();
 		}
 	}
 	else if(old_speed == 0)
