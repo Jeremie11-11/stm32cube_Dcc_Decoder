@@ -30,7 +30,7 @@ extern struct MEM_ASYM_VOLATGE_STRUCT memAsymData;
 void asym_dma_update(uint32_t buffer_full)
 {
 	uint32_t start_index, stop_index;
-	uint32_t Uaysm_mV = 0;
+	int32_t Uaysm_mV = 0;
 	uint32_t dcc_state = 0;
 	static uint32_t dcc_state_old = 2;
 	static uint32_t dcc_state_old2 = 2;
@@ -67,10 +67,6 @@ void asym_dma_update(uint32_t buffer_full)
 					Asym.Utrack1_mV += 1;
 				else
 					Asym.Utrack1_mV -= 1;
-
-#if ASYM_DEBUG
-				AsymDebug.voltage_1_tab[Uaysm_idx]++;
-#endif
 			}
 			else
 			{
@@ -78,11 +74,18 @@ void asym_dma_update(uint32_t buffer_full)
 					Asym.Utrack0_mV += 1;
 				else
 					Asym.Utrack0_mV -= 1;
+			}
 
 #if ASYM_DEBUG
-				AsymDebug.voltage_0_tab[Uaysm_idx]++;
+			memAsymData.Uy_mV[memAsymData.index2] = Asym.Utrack0_mV;
+			memAsymData.Uz_mV[memAsymData.index2] = Asym.Utrack0_mV - Asym.Utrack1_mV;
+
+			if(memAsymData.index2<255)
+				memAsymData.index2++;
+			else if(DccInst.dcc_target_speed != 0)
+				memAsymData.index2=0;
 #endif
-			}
+
 		}
 
 		dcc_state_old3 = dcc_state_old2;
@@ -90,18 +93,13 @@ void asym_dma_update(uint32_t buffer_full)
 		dcc_state_old = dcc_state;
 
 #if ASYM_DEBUG
-		memAsymData.Uw_mV[AsymDebug.debug_index] = dcc_state;
-		memAsymData.Ux_mV[AsymDebug.debug_index] = Uaysm_idx;
-		memAsymData.Uy_mV[AsymDebug.debug_index] = Asym.Utrack0_mV;
-		memAsymData.Uz_mV[AsymDebug.debug_index] = Asym.Utrack0_mV - Asym.Utrack1_mV;
+		memAsymData.Uw_mV[memAsymData.index1] = dcc_state;
+		memAsymData.Ux_mV[memAsymData.index1] = Uaysm_idx;
 
-
-		//AsymDebug.debug_tab0[AsymDebug.debug_index] = dcc_state;
-		//AsymDebug.debug_tab1[AsymDebug.debug_index] = Uaysm_idx;
-		if(AsymDebug.debug_index<255)
-			AsymDebug.debug_index++;
+		if(memAsymData.index1<255)
+			memAsymData.index1++;
 		else if(DccInst.dcc_target_speed != 0)
-			AsymDebug.debug_index=0;
+			memAsymData.index1=0;
 #endif
 	}
 	Asym.Uasym_mV = Asym.Utrack0_mV - Asym.Utrack1_mV;

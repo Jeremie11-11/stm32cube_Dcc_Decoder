@@ -77,6 +77,9 @@ struct MEM_ASYM_VOLATGE_STRUCT{
 	int16_t Ux_mV[256];
 	int16_t Uy_mV[256];
 	int16_t Uz_mV[256];
+
+	uint32_t index1;
+	uint32_t index2;
 } __attribute__ ((packed));
 
 void mem_init(void);

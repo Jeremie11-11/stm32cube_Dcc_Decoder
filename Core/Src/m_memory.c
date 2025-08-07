@@ -17,8 +17,8 @@ struct MEM_ASYM_VOLATGE_STRUCT memAsymData;
 
 extern DCC_INSTRUCTION_STRUCT DccInst;
 
-#define MEM_START_ADDRESS 0x08010000
-#define MEM_PAGE32 (32, 0x08010000)
+//#define MEM_START_ADDRESS 0x08010000
+//#define MEM_PAGE32 (32, 0x08010000)
 
 
 void mem_init(void)
@@ -159,5 +159,5 @@ void mem_write_motor(void)
 
 void mem_write_asym_data(void)
 {
-	mem_write_page(PAGE_ASYM_VOLTAGE, (void *)&memAsymData, sizeof(memAsymData));
+	mem_write_page(PAGE_ASYM_VOLTAGE, (void *)&memAsymData, FLASH_PAGE_SIZE);
 }
