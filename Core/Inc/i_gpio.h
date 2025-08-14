@@ -35,7 +35,10 @@ typedef enum{
 #define FRONT_LIGHT {GPIOC, GPIO_PIN_14}
 #define CAB_LIGHT {GPIOC, GPIO_PIN_15}
 #define REAR_LIGHT {GPIOH, GPIO_PIN_0}
-#define OPT_LIGHT {GPIOA, GPIO_PIN_11}
+#define OPT_LIGHT {GPIOA, GPIO_PIN_2}
+
+#define DEBUG_LED_ORANGE {GPIOA, GPIO_PIN_11}
+#define DEBUG_LED_RED {GPIOA, GPIO_PIN_2}
 
 #define PIN_CURRENT_EN {GPIOC, GPIO_PIN_13}	// PIN to enable higher input current
 

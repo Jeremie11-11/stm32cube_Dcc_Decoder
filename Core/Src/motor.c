@@ -66,7 +66,6 @@ void mot_speed_update(void)
 	cnt_start(COUNTER_MOTOR_SPEED_UPDATE, 200);
 
 
-
 	if(DccInst.signal_state == signal_red)
 	{
 		// RED signal: Stopping

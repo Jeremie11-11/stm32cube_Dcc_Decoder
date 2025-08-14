@@ -111,7 +111,7 @@ void asym_check_for_signal(void)
 	if(Asym.Uasym_mV > 3000)
 	{
 		// ---------- RED signal ----------
-		DccInst.signal_state = signal_red;
+		//DccInst.signal_state = signal_red;
 
 	}
 	// Threshold based on measurement: (630mV + 360mV) / 2 = 445mV (2x same state)
@@ -119,16 +119,16 @@ void asym_check_for_signal(void)
 	else if(Asym.Uasym_mV > 340)
 	{
 		// ---------- ORANGE signal ----------
-		DccInst.signal_state = signal_orange;
+		//DccInst.signal_state = signal_orange;
 
-		GPIO_WRITE(OPT_LIGHT, TRUE);
+		//GPIO_WRITE(OPT_LIGHT, TRUE);
 	}
 	else
 	{
 		// ---------- GREEN signal ----------
-		DccInst.signal_state = signal_green;
+		//DccInst.signal_state = signal_green;
 
-		GPIO_WRITE(OPT_LIGHT, FALSE);
+		//GPIO_WRITE(OPT_LIGHT, FALSE);
 	}
 }
 

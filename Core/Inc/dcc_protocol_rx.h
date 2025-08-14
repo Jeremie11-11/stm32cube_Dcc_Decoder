@@ -27,11 +27,7 @@ typedef enum{
 	config_variable_inst = 7,
 }inst_type_enum;
 
-typedef enum{
-	signal_red = 0,
-	signal_orange = 1,
-	signal_green = 2
-}signal_state_t;
+
 
 typedef struct{
 	uint8_t nb_data;

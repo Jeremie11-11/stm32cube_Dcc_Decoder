@@ -22,6 +22,13 @@ typedef enum{
 
 
 typedef enum{
+	signal_red = 0,
+	signal_orange = 1,
+	signal_green = 2
+}signal_state_t;
+
+
+typedef enum{
 	DIR_FORWARDS = 0,
 	DIR_BACKWARDS = 1,
 	DIR_STOPPED = 2

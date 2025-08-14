@@ -16,7 +16,7 @@
 // How many time a message has to be sent
 //#define DCC_MSG_REPEATED_TIME 100
 
-#define DMA_TIME_BUFFER_LENGTH 128
+#define DMA_TIME_BUFFER_LENGTH 64
 #define DMA_TIME_IDX_MASK (DMA_TIME_BUFFER_LENGTH-1)
 
 
@@ -37,7 +37,7 @@ typedef struct{
 	uint32_t idx_in;
 	uint32_t idx_out0;
 	uint32_t idx_out1;
-	uint8_t time_buffer[DMA_TIME_BUFFER_LENGTH];
+	uint16_t time_buffer[DMA_TIME_BUFFER_LENGTH];
 } DCC_PHYSICAL_LAYER_STRUCT;
 
 
@@ -52,9 +52,21 @@ typedef struct{
 	uint8_t byte_i;
 	uint8_t msg_in_i;
 	uint8_t msg_out_i;
-	uint8_t sent_nbr;
+	uint16_t timeout;
 	MESSAGE_STRUCT msg[DCC_MAX_MESSAGES_QUEUE];
 } DCC_PROTOCOL_STRUCT;
+
+typedef struct{
+	uint16_t green_cnt;
+	uint16_t orange_cnt;
+	uint16_t red_cnt;
+	signal_state_t signal_state;
+	uint16_t timeout_tab[8];
+	uint32_t in_idx;
+	uint32_t out_idx;
+	//uint16_t val[300];
+	//uint32_t val_index;
+} DCC_SIGNAL_STRUCT;
 
 typedef struct{
 	uint32_t val_buffer[30];
@@ -67,6 +79,10 @@ typedef struct{
 	uint32_t xor_error;
 } DCC_DEBUG_STRUCT;
 
+typedef struct{
+	uint8_t gpio[2048];
+	uint32_t idx;
+} DCC_DEBUG2_STRUCT;
 
 void dcc_init(void);
 
@@ -75,5 +91,7 @@ void dcc_tx_update(void);
 void dcc_dma_update(uint32_t buffer_full);
 
 void dcc_rx_update(void);
+
+void signal_update(void);
 
 #endif /* INC_DCC_PHYSICAL_LAYER_H_ */

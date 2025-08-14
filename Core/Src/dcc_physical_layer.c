@@ -7,21 +7,27 @@
 
 #include <dcc_physical_layer.h>
 #include <i_dma.h>
+#include <dcc_protocol_rx.h>
 
 
 DCC_PROTOCOL_STRUCT DccTx;
 DCC_PROTOCOL_STRUCT DccRx;
+DCC_SIGNAL_STRUCT DccSignal;
 
 extern DMA_STRUCT Dma;
 DCC_PHYSICAL_LAYER_STRUCT Dma_Struct;
+extern DCC_INSTRUCTION_STRUCT DccInst;
 
 
 DCC_DEBUG_STRUCT DccDebug;
+DCC_DEBUG2_STRUCT DccDebug2;
 
 
 void dcc_init(void)
 {
 	DccDebug.recieved_msg = 0;
+	DccSignal.in_idx = 0;
+	DccSignal.out_idx = 0;
 }
 
 
@@ -100,17 +106,30 @@ void dcc_rx_update(void)
 	static uint32_t val1;
 	static uint8_t byte, byte_xor;
 
+	// Check for new values
 	while(Dma_Struct.idx_out0 != Dma_Struct.idx_in)
 	{
+		// The communication protocol is based on the period time
 		val = Dma_Struct.time_buffer[Dma_Struct.idx_out0] + Dma_Struct.time_buffer[Dma_Struct.idx_out1];
 
+		// Check if preamble is finished
 		if(DccRx.preamble_i > 1)
 		{
 			// ----- Preamble (10 bits) -----
 			if((val >= DCC_RX_ONE_LOW) && (val <= DCC_RX_ONE_HIGH))
+			{
+				// Bit with state "1" received
 				DccRx.preamble_i--;
+			}
 			else
+			{
+				// Bit with unknown state received
 				DccRx.preamble_i = DCC_RX_PREAMBLE_INIT;
+
+				// Store timeout if bigger than previous
+				if(Dma_Struct.time_buffer[Dma_Struct.idx_out0] > DccRx.timeout)
+					DccRx.timeout = Dma_Struct.time_buffer[Dma_Struct.idx_out0];
+			}
 
 		}
 		else if(DccRx.preamble_i > 0)
@@ -131,6 +150,12 @@ void dcc_rx_update(void)
 
 				DccDebug.buffer[0] = val;
 				DccDebug.idx = 1;
+
+				DccSignal.timeout_tab[DccSignal.in_idx++] = DccRx.timeout;
+				DccSignal.in_idx &= 0x07;
+
+				DccRx.timeout = 10000;
+
 			}
 			else if((val >= DCC_RX_ONE_LOW) && (val <= DCC_RX_ZERO_HIGH) && (val1 >= DCC_RX_ONE_LOW) && (val1 <= DCC_RX_ONE_HIGH))
 			{
@@ -207,6 +232,8 @@ void dcc_rx_update(void)
 							DccRx.msg[DccRx.msg_in_i].len = DccRx.byte_i;
 							DccRx.msg_in_i = (DccRx.msg_in_i + 1) & (DCC_MAX_MESSAGES_QUEUE-1);
 							DccRx.preamble_i = DCC_RX_PREAMBLE_INIT;
+							DccRx.timeout = 0;
+
 						}
 					}
 				}
@@ -235,4 +262,85 @@ void dcc_rx_update(void)
 	}
 }
 
+void signal_update()
+{
 
+	while(DccSignal.out_idx != DccSignal.in_idx)
+	{
+		uint32_t timeout = DccSignal.timeout_tab[DccSignal.out_idx];
+
+		// Less than 200uS
+		if(timeout < 30)
+		{
+			if(DccSignal.green_cnt < 10)
+				DccSignal.green_cnt++;
+			if(DccSignal.orange_cnt > 0)
+				DccSignal.orange_cnt--;
+			if(DccSignal.red_cnt > 0)
+				DccSignal.red_cnt--;
+		}
+		// Between 200uS and 600uS
+		else if(timeout < 80)
+		{
+			if(DccSignal.orange_cnt < 10)
+				DccSignal.orange_cnt++;
+			if(DccSignal.green_cnt > 0)
+				DccSignal.green_cnt--;
+			if(DccSignal.red_cnt > 0)
+				DccSignal.red_cnt--;
+		}
+		// Between 600uS and 1000uS
+		else if(timeout < 150)
+		{
+			if(DccSignal.red_cnt < 10)
+				DccSignal.red_cnt++;
+			if(DccSignal.green_cnt > 0)
+				DccSignal.green_cnt--;
+			if(DccSignal.orange_cnt > 0)
+				DccSignal.orange_cnt--;
+		}
+		else
+		{
+
+		}
+
+		if(DccSignal.signal_state == signal_green)
+		{
+			GPIO_WRITE(DEBUG_LED_ORANGE, FALSE);
+			GPIO_WRITE(DEBUG_LED_RED, FALSE);
+
+			if(DccSignal.orange_cnt > (DccSignal.green_cnt+2))
+				DccSignal.signal_state = signal_orange;
+			else if(DccSignal.red_cnt > (DccSignal.green_cnt+2))
+				DccSignal.signal_state = signal_red;
+		}
+		else if(DccSignal.signal_state == signal_orange)
+		{
+			GPIO_WRITE(DEBUG_LED_ORANGE, TRUE);
+			GPIO_WRITE(DEBUG_LED_RED, FALSE);
+
+			if(DccSignal.green_cnt > (DccSignal.orange_cnt+2))
+				DccSignal.signal_state = signal_green;
+			else if(DccSignal.red_cnt > (DccSignal.orange_cnt+2))
+				DccSignal.signal_state = signal_red;
+		}
+		else
+		{
+			GPIO_WRITE(DEBUG_LED_ORANGE, FALSE);
+			GPIO_WRITE(DEBUG_LED_RED, TRUE);
+
+			if(DccSignal.orange_cnt > (DccSignal.red_cnt+2))
+				DccSignal.signal_state = signal_orange;
+			else if(DccSignal.green_cnt > (DccSignal.red_cnt+2))
+				DccSignal.signal_state = signal_green;
+		}
+
+		// Update signal
+		if(DccInst.signal_state != DccSignal.signal_state)
+			DccInst.signal_state = DccSignal.signal_state;
+
+		DccSignal.out_idx++;
+		DccSignal.out_idx &= 0x07;
+	}
+
+}
