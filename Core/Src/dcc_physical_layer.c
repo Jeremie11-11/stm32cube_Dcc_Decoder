@@ -280,7 +280,7 @@ void signal_update()
 				DccSignal.red_cnt--;
 		}
 		// Between 200uS and 600uS
-		else if(timeout < 80)
+		else if(timeout < 100)
 		{
 			if(DccSignal.orange_cnt < 10)
 				DccSignal.orange_cnt++;
@@ -290,7 +290,7 @@ void signal_update()
 				DccSignal.red_cnt--;
 		}
 		// Between 600uS and 1000uS
-		else if(timeout < 150)
+		else if(timeout < 200)
 		{
 			if(DccSignal.red_cnt < 10)
 				DccSignal.red_cnt++;
