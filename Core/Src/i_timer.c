@@ -50,22 +50,34 @@ void tim_set_motor_bridge(dir_t direction)
 	if(direction == DIR_FORWARDS)
 	{
 		// Start channel 1
-		HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
-		HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_2);
+		//HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+		HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_1);
+
+		//HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_2);
+		HAL_TIMEx_PWMN_Stop(&htim1, TIM_CHANNEL_2);
+
 		HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
 	}
 	else if(direction == DIR_BACKWARDS)
 	{
 		// Start channel 2
-		HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_1);
-		HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
+		//HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_1);
+		HAL_TIMEx_PWMN_Stop(&htim1, TIM_CHANNEL_1);
+
+		//HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
+		HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
+
 		HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
 	}
 	else
 	{
 		// Stop channel 1 and 2
-		HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_1);
-		HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_2);
+		//HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_1);
+		HAL_TIMEx_PWMN_Stop(&htim1, TIM_CHANNEL_1);
+
+		//HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_2);
+		HAL_TIMEx_PWMN_Stop(&htim1, TIM_CHANNEL_2);
+
 		HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
 	}
 }
