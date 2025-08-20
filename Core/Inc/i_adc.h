@@ -12,6 +12,11 @@
 
 //
 #define ADC_NBR_MEASURE_FOR_AVERAGE 512
+#define ADC_12_BIT_RESOLUTION 4096
+#define ADC_TEMP_CALIBRATION_MV 3000
+#define ADC_VOLTAGE_RANGE_MV 3300
+#define ADC_SHUNT_RESISTOR_MOHM 1000
+#define ADC_OPAMP_PGA_GAIN 1
 
 typedef struct{
 	uint32_t Usupply_mV;	// Power supply voltage

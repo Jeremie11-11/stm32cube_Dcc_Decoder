@@ -16,6 +16,7 @@ extern ADC_HandleTypeDef hadc1;
 extern ADC_HandleTypeDef hadc2;
 extern DMA_HandleTypeDef hdma_adc1;
 
+extern OPAMP_HandleTypeDef hopamp1;
 
 extern DMA_STRUCT Dma;
 
@@ -34,6 +35,11 @@ void adc_init(void)
 {
 	AdcDebug.val_idx = 0;
 	AdcDebug.current_idx = 0;
+
+  /* Start the OPAMP (PGA) */
+  if (HAL_OPAMP_Start(&hopamp1) != HAL_OK) {
+      Error_Handler();  // Start failed
+  }
 
 	// ---------- ADC1 ----------
 	// ADC used for power supply voltage measurement, motor current measurement
@@ -54,8 +60,8 @@ void adc_init(void)
 	memcpy(&AdcDebug.ts_cal2, ((void *) TS_CAL2_ADDRESS), 2);
 
 	// Correction of the ADC Vref (Using Vref=3.3V vs Vref=3.0V for calibration)
-	AdcDebug.ts_cal1 = (AdcDebug.ts_cal1 * 30) / 33;
-	AdcDebug.ts_cal2 = (AdcDebug.ts_cal2 * 30) / 33;
+	AdcDebug.ts_cal1 = (AdcDebug.ts_cal1 * ADC_TEMP_CALIBRATION_MV) / ADC_VOLTAGE_RANGE_MV;
+	AdcDebug.ts_cal2 = (AdcDebug.ts_cal2 * ADC_TEMP_CALIBRATION_MV) / ADC_VOLTAGE_RANGE_MV;
 
 	// Calculation of the slope for the temperature sensor (mC° / reg)
 	AdcDebug.ts_slope = ((TS_CAL2_TEMP - TS_CAL1_TEMP)*1000) / (AdcDebug.ts_cal2-AdcDebug.ts_cal1);
@@ -66,13 +72,14 @@ void adc_init(void)
 	// ADC used for asymmetrical voltage measurement
 
 	// ADC calibration
-	if (HAL_ADCEx_Calibration_Start(&hadc2, ADC_SINGLE_ENDED) != HAL_OK)
-	{
+	//if (HAL_ADCEx_Calibration_Start(&hadc2, ADC_SINGLE_ENDED) != HAL_OK)
+	//{
 		// calibration error
-		Error_Handler();
-	}
+		//Error_Handler();
+	//}
 
-	HAL_ADC_Start(&hadc2);
+	//HAL_ADC_Start(&hadc2);
+
 }
 
 
@@ -92,7 +99,10 @@ void adc_measure_update(void)
 	{
 		// ---------- Bridge current ----------
 		// Calculate current with 12 bit ADC, 3.3V Uref and 1.0 Ohm Rshunt
-		int32_t Ibridge_mA = ((((Ibridge_sum/ADC_NBR_MEASURE_FOR_AVERAGE) * 3300)/4096) * 100)/100;
+		int32_t Ibridge_mA = Ibridge_sum/ADC_NBR_MEASURE_FOR_AVERAGE;
+		Ibridge_mA = (Ibridge_mA * ADC_VOLTAGE_RANGE_MV)/ADC_12_BIT_RESOLUTION;
+		Ibridge_mA = (Ibridge_mA * ADC_SHUNT_RESISTOR_MOHM)/1000;
+		Ibridge_mA = Ibridge_mA/ADC_OPAMP_PGA_GAIN;
 		if(Ibridge_mA < 1)
 			Ibridge_mA = 1;
 

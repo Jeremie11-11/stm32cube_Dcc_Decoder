@@ -238,12 +238,12 @@ void mot_pwm_update(void)
 		else
 		{
 			// Calculate real motor voltage
-			Uin = (Adc.Uin_mV - 300);
+			Uin = (Adc.Uin_mV - 0);
 			if(Uin<0)
 				Uin=0;
 			Motor.Umot_mV = (Motor.ccr * Uin) / PWM_MOTOR_PERIOD_CNT;
 
-			Motor.Uemf_mV = Motor.Umot_mV - (22+0) * Adc.Ibridge_mA;
+			Motor.Uemf_mV = Motor.Umot_mV - (23) * Adc.Ibridge_mA;
 
 			Motor_Uemf2_mV = (Motor.Uemf_old_mV + Motor.Uemf_mV)/2;
 
@@ -309,8 +309,10 @@ void mot_pwm_update(void)
 		Motor.Unew_mV += Motor.Uder_mV;
 
 		//Motor.Unew_mV = (((Motor.Uref_mV - Motor.Uemf_mV) * var_p) / 64) + Motor.Uint_mV + Motor.Uder_mV + Motor.Ustart;
-		if(Motor.Unew_mV < Mem.Umin_mV)
-			Motor.Unew_mV = Mem.Umin_mV;
+		if(Motor.Unew_mV < (int32_t) (Mem.Umin_mV))
+		{
+			Motor.Unew_mV = (int32_t) (Mem.Umin_mV);
+		}
 
 		Motor.ccr = (Motor.Unew_mV * PWM_MAX) / Adc.Uin_mV;
 

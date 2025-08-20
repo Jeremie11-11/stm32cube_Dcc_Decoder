@@ -8,7 +8,6 @@
 
 #include <i_dma.h>
 #include <i_adc.h>
-#include <asymmetrical_volt.h>
 #include <dcc_physical_layer.h>
 
 
@@ -47,17 +46,17 @@ void dma_init(void)
 	// ADC2->DR value stored into memory(Dma.asym_volt_buffer)
 
 	// Enable DMA configuration
-	ADC2->CFGR |= ADC_CFGR_DMAEN | ADC_CFGR_DMACFG;
+	//ADC2->CFGR |= ADC_CFGR_DMAEN | ADC_CFGR_DMACFG;
 
 	/*
 	 HAL_DMA_XFER_CPLT_CB_ID          = 0x00U,    // Full transfer
 	 HAL_DMA_XFER_HALFCPLT_CB_ID      = 0x01U,    // Half transfer
 	*/
-	HAL_DMA_RegisterCallback(&hdma_adc2, HAL_DMA_XFER_HALFCPLT_CB_ID, dma_asym_callback_halffull);
-	HAL_DMA_RegisterCallback(&hdma_adc2, HAL_DMA_XFER_CPLT_CB_ID, dma_asym_callback_full);
+	//HAL_DMA_RegisterCallback(&hdma_adc2, HAL_DMA_XFER_HALFCPLT_CB_ID, dma_asym_callback_halffull);
+	//HAL_DMA_RegisterCallback(&hdma_adc2, HAL_DMA_XFER_CPLT_CB_ID, dma_asym_callback_full);
 
 	// Enable DMA interrupt
-	HAL_DMA_Start_IT(&hdma_adc2, (uint32_t) ((&ADC2->DR)), (uint32_t) (Dma.asym_volt_buffer), DMA_DCC_BUFFER_LENGTH);
+	//HAL_DMA_Start_IT(&hdma_adc2, (uint32_t) ((&ADC2->DR)), (uint32_t) (Dma.asym_volt_buffer), DMA_DCC_BUFFER_LENGTH);
 
 
 	// ---------- DMA2 ----------
@@ -101,7 +100,7 @@ void dma_asym_callback_halffull(DMA_HandleTypeDef *hdma)
 {
   if(hdma == &hdma_adc2)
   {
-  	asym_dma_update(FALSE);
+  	//asym_dma_update(FALSE);
   }
 }
 
@@ -110,7 +109,7 @@ void dma_asym_callback_full(DMA_HandleTypeDef *hdma)
 {
   if(hdma == &hdma_adc2)
   {
-  	asym_dma_update(TRUE);
+  	//asym_dma_update(TRUE);
   }
 }
 
