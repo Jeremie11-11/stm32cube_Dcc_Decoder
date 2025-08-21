@@ -44,6 +44,7 @@ struct MEM_CONFIG_STRUCT{
 	uint32_t Ustart_bwd_mV;
 
 	uint32_t Uref_min_start_mV;
+	uint32_t Uref_min_mV;
 	uint32_t Uemf_max_stop_mV;
 	uint32_t Umin_mV;
 	uint32_t motor_p;
@@ -56,7 +57,7 @@ struct MEM_CONFIG_STRUCT{
 	uint32_t pwm_rear_light;
 	uint32_t pwm_opt_light;
 
-	//uint32_t pad; // Ensure that MEM_STRUCT is a multiple of 8
+	uint32_t pad; // Ensure that MEM_STRUCT is a multiple of 8
 } __attribute__ ((packed));
 
 

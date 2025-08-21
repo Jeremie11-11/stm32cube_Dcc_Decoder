@@ -28,6 +28,7 @@ typedef struct{
 	int32_t starting;
 	int32_t step;
 	int32_t running;
+	int32_t booting;
 	int32_t init_current[100];
 	uint16_t Uref_cl[29];
 	uint16_t Uref_op[29];

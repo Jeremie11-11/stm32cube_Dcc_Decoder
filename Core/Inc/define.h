@@ -31,7 +31,8 @@ typedef enum{
 typedef enum{
 	DIR_FORWARDS = 0,
 	DIR_BACKWARDS = 1,
-	DIR_STOPPED = 2
+	DIR_STOPPED = 2,
+	DIR_DEFAULT_VALUE = 3
 }dir_t;
 
 typedef enum{

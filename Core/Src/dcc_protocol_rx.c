@@ -17,7 +17,13 @@ extern DCC_DEBUG_STRUCT DccDebug;
 extern struct MEM_CONFIG_STRUCT Mem;
 extern ADC_STRUCT Adc;
 
-DCC_INSTRUCTION_STRUCT DccInst;
+DCC_INSTRUCTION_STRUCT DccInst = {
+		.actual_dir = DIR_DEFAULT_VALUE,
+		.dcc_target_speed = 0,
+		.target_speed = 0,
+		.actual_speed = 0,
+		.signal_state = signal_green
+};
 
 
 uint32_t decoded_address_match(DCC_MESSAGE_STRUCT *msg, uint8_t *buffer)
@@ -162,6 +168,9 @@ void dcc_check_for_new_messages(void)
 		if(msg.nb_data >= 2)
 			DccInst.functions = msg.fct;
 
+		if((DccInst.actual_dir != DIR_FORWARDS) && (DccInst.actual_dir != DIR_BACKWARDS))
+			DccInst.actual_dir = DIR_FORWARDS;
+
 		// Update direction if motor is stopped
 		if((DccInst.dcc_target_speed == 0) && (DccInst.actual_speed == 0))
 			DccInst.actual_dir = DIR_FORWARDS;
@@ -177,6 +186,10 @@ void dcc_check_for_new_messages(void)
 
 		if(msg.nb_data >= 2)
 			DccInst.functions = msg.fct;
+
+		// Update direction if motor is stopped
+		if((DccInst.actual_dir != DIR_FORWARDS) && (DccInst.actual_dir != DIR_BACKWARDS))
+			DccInst.actual_dir = DIR_BACKWARDS;
 
 		// Update direction if motor is stopped
 		if((DccInst.dcc_target_speed == 0) && (DccInst.actual_speed == 0))

@@ -21,14 +21,15 @@ extern DCC_INSTRUCTION_STRUCT DccInst;
 extern ADC_STRUCT Adc;
 
 
-MOTOR_STRUCT Motor;
+MOTOR_STRUCT Motor = {
+		.running = FALSE,
+		.booting = TRUE
+};
 
 
 void mot_init(void)
 {
 	uint32_t i;
-
-	Motor.running = FALSE;
 
 	for(i = 0; i <= 28; ++i)
 	{
@@ -58,18 +59,21 @@ void mot_speed_update(void)
 {
 	int32_t old_speed = DccInst.actual_speed;
 
+	// Leave if no valid drive instruction have been received
+	if((DccInst.actual_dir != DIR_FORWARDS) && (DccInst.actual_dir != DIR_BACKWARDS))
+		return;
+
 	// Leave if the counter is not issued
 	if(cnt_read(COUNTER_MOTOR_SPEED_UPDATE) > 0)
 		return;
-
-	// Reload the counter
-	cnt_start(COUNTER_MOTOR_SPEED_UPDATE, 200);
-
 
 	if(DccInst.signal_state == signal_red)
 	{
 		// RED signal: Stopping
 		DccInst.target_speed = 0;
+
+		// Reload the counter
+		cnt_start(COUNTER_MOTOR_SPEED_UPDATE, 100);
 	}
 	else if(DccInst.signal_state == signal_orange)
 	{
@@ -88,11 +92,17 @@ void mot_speed_update(void)
 			else
 				DccInst.target_speed = DccInst.dcc_target_speed;
 		}
+
+		// Reload the counter
+		cnt_start(COUNTER_MOTOR_SPEED_UPDATE, 100);
 	}
 	else
 	{
 		// GREEN signal: Do not limit the speed
 		DccInst.target_speed = DccInst.dcc_target_speed;
+
+		// Reload the counter
+		cnt_start(COUNTER_MOTOR_SPEED_UPDATE, 200);
 	}
 
 
@@ -152,8 +162,12 @@ void mot_speed_update(void)
 			mot_current_source(DISABLE);
 
 			// Store start of the movement
+			memMotData.Uin_mV[Motor.i]  = -1;
+			memMotData.Imot_mA[Motor.i] = -1;
+			memMotData.Uemf_mV[Motor.i] = -1;
+			memMotData.Unew_mV[Motor.i] = -1;
+
 			mem_write_motor();
-			mem_write_asym_data();
 		}
 	}
 	else if(old_speed == 0)
@@ -166,6 +180,12 @@ void mot_speed_update(void)
 			// ----- Starting forwards move -----
 			// Update flag
 			DccInst.actual_dir = DIR_FORWARDS;
+
+			if(Motor.booting == TRUE)
+			{
+				Motor.booting = FALSE;
+				DccInst.actual_speed = DccInst.target_speed;
+			}
 
 			// Set lights (depending on direction)
 			//dcc_update_functions();
@@ -181,6 +201,12 @@ void mot_speed_update(void)
 			// ----- Starting backwards move -----
 			// Update flag
 			DccInst.actual_dir = DIR_BACKWARDS;
+
+			if(Motor.booting == TRUE)
+			{
+				Motor.booting = FALSE;
+				DccInst.actual_speed = DccInst.target_speed;
+			}
 
 			// Set lights (depending on direction)
 			//dcc_update_functions();
@@ -213,10 +239,21 @@ void mot_pwm_update(void)
 
 	if(Mem.event_ctrl.bit.motor_ctrl == CTRL_OPEN_LOOP)
 	{
-		// ----- Open loop PWM control -----
-		Motor.Unew_mV = Motor.Uref_op[abs(DccInst.actual_speed)];
+		// ----- Calculate values in order to store them -----
+		// Calculate real motor voltage
+		Motor.Umot_mV = ((((int32_t)(Motor.ccr)) * Adc.Uin_mV) / PWM_MOTOR_PERIOD_CNT);
 
-		Motor.ccr = (Motor.Unew_mV * PWM_MAX) / Adc.Uin_mV;
+		Motor.Uemf_mV = (Motor.Umot_mV - ((int32_t)(Adc.Ibridge_mA)/2)) - (22) * ((int32_t)(Adc.Ibridge_mA));
+
+		if(Motor.i >= 255)
+			Motor.i = 0;
+
+		// ----- Open loop PWM control -----
+		Motor.Unew_mV = (int32_t)(Motor.Uref_op[abs(DccInst.actual_speed)]);
+
+		Motor.ccr = (((uint32_t)(Motor.Unew_mV)) * PWM_MOTOR_PERIOD_CNT) / Adc.Uin_mV;
+
+
 	}
 	else
 	{
@@ -238,12 +275,14 @@ void mot_pwm_update(void)
 		else
 		{
 			// Calculate real motor voltage
-			Uin = (Adc.Uin_mV - 0);
-			if(Uin<0)
-				Uin=0;
-			Motor.Umot_mV = (Motor.ccr * Uin) / PWM_MOTOR_PERIOD_CNT;
+			//Uin = (Adc.Uin_mV - 300);
+			//if(Uin<0)
+				//Uin=0;
+			//Motor.Umot_mV = (Motor.ccr * Uin) / PWM_MOTOR_PERIOD_CNT;
+			Motor.Umot_mV = ((((int32_t)(Motor.ccr)) * Adc.Uin_mV) / PWM_MOTOR_PERIOD_CNT);
 
-			Motor.Uemf_mV = Motor.Umot_mV - (23) * Adc.Ibridge_mA;
+			//Motor.Uemf_mV = Motor.Umot_mV - (22) * Adc.Ibridge_mA;
+			Motor.Uemf_mV = (Motor.Umot_mV - ((int32_t)(Adc.Ibridge_mA)/2)) - (22) * ((int32_t)(Adc.Ibridge_mA));
 
 			Motor_Uemf2_mV = (Motor.Uemf_old_mV + Motor.Uemf_mV)/2;
 
@@ -255,6 +294,8 @@ void mot_pwm_update(void)
 		if((Motor.starting < 80) && (Motor.Uref_mV < Mem.Uref_min_start_mV))
 			Motor.Uref_mV = Mem.Uref_min_start_mV;
 
+		if(Motor.Uref_mV < Mem.Uref_min_mV)
+			Motor.Uref_mV = Mem.Uref_min_mV;
 
 
 		if((abs(DccInst.actual_speed) == 1) && (Motor.starting >= 40))
@@ -310,11 +351,9 @@ void mot_pwm_update(void)
 
 		//Motor.Unew_mV = (((Motor.Uref_mV - Motor.Uemf_mV) * var_p) / 64) + Motor.Uint_mV + Motor.Uder_mV + Motor.Ustart;
 		if(Motor.Unew_mV < (int32_t) (Mem.Umin_mV))
-		{
 			Motor.Unew_mV = (int32_t) (Mem.Umin_mV);
-		}
 
-		Motor.ccr = (Motor.Unew_mV * PWM_MAX) / Adc.Uin_mV;
+		Motor.ccr = (Motor.Unew_mV * PWM_MOTOR_PERIOD_CNT) / Adc.Uin_mV;
 
 	}
 
@@ -336,6 +375,8 @@ void mot_pwm_update(void)
 
 	// Debug
 	memMotData.Uin_mV[Motor.i]  = Adc.Uin_mV;
+	//memMotData.Uin_mV[Motor.i]  = Motor.ccr;
+	//memMotData.Uin_mV[Motor.i]  = Motor.Umot_mV;
 	memMotData.Imot_mA[Motor.i] = Adc.Ibridge_mA;
 	memMotData.Uemf_mV[Motor.i] = Motor.Uemf_mV;
 	memMotData.Unew_mV[Motor.i] = Motor.Unew_mV;
