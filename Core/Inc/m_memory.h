@@ -18,28 +18,28 @@
 #define PAGE_MOTOR_STATUS 62
 #define PAGE_CONFIG 63
 
-
+/*
 typedef struct{
-	enable_t led_boot_event			: 1;
-	enable_t led_dcc_com				: 1;
-	enable_t led_dcc_com_errors	: 1;
-	enable_t led_mem_write			: 1;
-	uint32_t reserved0					: 4+8;
+	//enable_t led_boot_event			: 1;
+	//enable_t led_dcc_com				: 1;
+	//enable_t led_dcc_com_errors	: 1;
+	//enable_t led_mem_write			: 1;
+	//uint32_t reserved0					: 4+8;
 
 	motor_ctrl_t motor_ctrl			: 1;
-	enable_t sleep_enable				: 1;
+	//enable_t sleep_enable				: 1;
 	uint32_t reserved1					: 6+8;
 } bit_events_ctrl_t;
-
+*/
 
 typedef union {
-	bit_events_ctrl_t bit;
+	motor_ctrl_t e;
   uint32_t u32;
-} events_ctrl_t;
+} motor_ctrl_u32_t;
 
 struct MEM_CONFIG_STRUCT{
 	uint32_t address;
-	events_ctrl_t event_ctrl;
+	motor_ctrl_u32_t motor_ctrl;
 	uint32_t Ustart_fwd_mV;
 	uint32_t Ustart_bwd_mV;
 

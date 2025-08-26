@@ -91,6 +91,8 @@ void adc_measure_update(void)
 	static uint32_t Usupply_sum=0;
 	static int32_t Ctemp_sum=0;
 
+	GPIO_WRITE(TEST_PIN2, TRUE);
+
 	Ibridge_sum += Dma.adc1_measure_buffer.data.Ibridge_raw;
 	Usupply_sum += Dma.adc1_measure_buffer.data.Usupply_raw;
 	Ctemp_sum += Dma.adc1_measure_buffer.data.Temp_raw;
@@ -139,6 +141,7 @@ void adc_measure_update(void)
 	{
 		val_cnt--;
 	}
+	GPIO_WRITE(TEST_PIN2, FALSE);
 }
 
 

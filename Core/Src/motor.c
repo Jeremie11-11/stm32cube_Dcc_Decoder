@@ -111,7 +111,7 @@ void mot_speed_update(void)
 
 	}
 
-	if(Mem.event_ctrl.bit.motor_ctrl == CTRL_OPEN_LOOP)
+	if(Mem.motor_ctrl.e == CTRL_OPEN_LOOP)
 	{
 		// ----- Open loop speed control -----
 		if((DccInst.actual_speed * DccInst.target_speed > 0) || (DccInst.actual_speed == 0))
@@ -230,15 +230,34 @@ void mot_speed_update(void)
 
 void mot_pwm_update(void)
 {
-	int32_t Uin, Motor_Uemf2_mV=0;
+	int32_t Motor_Uemf2_mV=0;
 	static int32_t var_p, var_i, var_p2, var_d;
 
 	// Ensure motor is running
 	if(Motor.running != TRUE)
 		return;
 
-	if(Mem.event_ctrl.bit.motor_ctrl == CTRL_OPEN_LOOP)
+	if(Mem.motor_ctrl.e == CTRL_OPEN_LOOP_5_PERCENT_PWM)
 	{
+		// ----- Open loop 5 percent PWM control -----
+		// Mode used for motor identification, dimensioning and tests
+
+		Motor.Umot_mV = ((((int32_t)(Motor.ccr)) * Adc.Uin_mV) / PWM_MOTOR_PERIOD_CNT);
+
+		Motor.Uemf_mV = (Motor.Umot_mV - ((int32_t)(Adc.Ibridge_mA)/2)) - (22) * ((int32_t)(Adc.Ibridge_mA));
+
+		if(Motor.i >= 255)
+			Motor.i = 0;
+
+		Motor.Unew_mV = (int32_t)(Motor.Uref_op[abs(DccInst.actual_speed)]);
+
+		// 5 percent PWM control
+		Motor.ccr = (PWM_MOTOR_PERIOD_CNT * (uint32_t)(abs(DccInst.actual_speed))) / 20 ;
+	}
+	else if(Mem.motor_ctrl.e == CTRL_OPEN_LOOP)
+	{
+		// ----- Open loop PWM control -----
+
 		// ----- Calculate values in order to store them -----
 		// Calculate real motor voltage
 		Motor.Umot_mV = ((((int32_t)(Motor.ccr)) * Adc.Uin_mV) / PWM_MOTOR_PERIOD_CNT);
@@ -248,7 +267,7 @@ void mot_pwm_update(void)
 		if(Motor.i >= 255)
 			Motor.i = 0;
 
-		// ----- Open loop PWM control -----
+		//
 		Motor.Unew_mV = (int32_t)(Motor.Uref_op[abs(DccInst.actual_speed)]);
 
 		Motor.ccr = (((uint32_t)(Motor.Unew_mV)) * PWM_MOTOR_PERIOD_CNT) / Adc.Uin_mV;

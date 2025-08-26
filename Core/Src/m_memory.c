@@ -37,14 +37,14 @@ void mem_init(void)
 		// Write default values
 
 		Mem.address = 100;
-
+/*
 		Mem.event_ctrl.bit.led_boot_event = _ENABLE;
 		Mem.event_ctrl.bit.led_dcc_com = _ENABLE;
 		Mem.event_ctrl.bit.led_dcc_com_errors = _ENABLE;
 		Mem.event_ctrl.bit.led_mem_write = _ENABLE;
 		Mem.event_ctrl.bit.motor_ctrl = CTRL_CLOSE_LOOP;
 		Mem.event_ctrl.bit.sleep_enable = _ENABLE;
-
+*/
 		Mem.Ustart_fwd_mV = 6000;
 		Mem.Ustart_bwd_mV = 6000;
 		Mem.Umin_mV = 3000;
