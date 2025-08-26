@@ -66,7 +66,17 @@ void mot_speed_update(void)
 	// Leave if the counter is not issued
 	if(cnt_read(COUNTER_MOTOR_SPEED_UPDATE) > 0)
 		return;
+/*
+	if(DccInst.emergency_stop != 0)
+	{
+		// Emergency stop: Stopping
+		DccInst.target_speed = 0;
 
+		// Reload the counter
+		cnt_start(COUNTER_MOTOR_SPEED_UPDATE, 5);
+	}
+	else
+	*/
 	if(DccInst.signal_state == signal_red)
 	{
 		// RED signal: Stopping
@@ -105,13 +115,7 @@ void mot_speed_update(void)
 		cnt_start(COUNTER_MOTOR_SPEED_UPDATE, 200);
 	}
 
-
-	if(DccInst.emergency_stop != 0)
-	{
-
-	}
-
-	if(Mem.motor_ctrl.e == CTRL_OPEN_LOOP)
+	if((Mem.motor_ctrl.e == CTRL_OPEN_LOOP) || (Mem.motor_ctrl.e == CTRL_OPEN_LOOP_5_PERCENT_PWM))
 	{
 		// ----- Open loop speed control -----
 		if((DccInst.actual_speed * DccInst.target_speed > 0) || (DccInst.actual_speed == 0))
@@ -128,7 +132,7 @@ void mot_speed_update(void)
 		if((DccInst.actual_speed == 1) && ((Motor.Uemf_avg_mV > (Mem.Uref_min_start_mV-50)) || (Motor.starting >= 80)))
 			// Acceleration only if the rotor is moving
 			DccInst.actual_speed++;
-		else if((DccInst.actual_speed == -1) && (Motor.Uemf_avg_mV <= Mem.Uemf_max_stop_mV))
+		else if((DccInst.actual_speed == -1) && (Motor.Uemf_avg_mV <= (int32_t)Mem.Uemf_max_stop_mV))
 			// Stopping only if the speed is slow
 			DccInst.actual_speed++;
 		else
@@ -140,7 +144,7 @@ void mot_speed_update(void)
 		if((DccInst.actual_speed == -1) && ((Motor.Uemf_avg_mV > (Mem.Uref_min_start_mV-50)) || (Motor.starting >= 80)))
 			// Acceleration only if the rotor is moving
 			DccInst.actual_speed--;
-		else if((DccInst.actual_speed == 1) && (Motor.Uemf_avg_mV <= Mem.Uemf_max_stop_mV))
+		else if((DccInst.actual_speed == 1) && (Motor.Uemf_avg_mV <= (int32_t)Mem.Uemf_max_stop_mV))
 			// Stopping only if the speed is slow
 			DccInst.actual_speed--;
 		else
@@ -150,7 +154,6 @@ void mot_speed_update(void)
 
 	if(DccInst.actual_speed == 0)
 	{
-
 		// Disable H-bridge
 		tim_set_motor_bridge(DIR_STOPPED);
 
@@ -173,6 +176,11 @@ void mot_speed_update(void)
 	else if(old_speed == 0)
 	{
 		// ----- Preparing move -----
+
+		// Skip acceleration ramp if booting
+		if(Motor.booting == TRUE)
+			DccInst.actual_speed = DccInst.target_speed;
+
 		mot_current_source(ENABLE);
 
 		if(DccInst.actual_speed > 0)
@@ -180,12 +188,6 @@ void mot_speed_update(void)
 			// ----- Starting forwards move -----
 			// Update flag
 			DccInst.actual_dir = DIR_FORWARDS;
-
-			if(Motor.booting == TRUE)
-			{
-				Motor.booting = FALSE;
-				DccInst.actual_speed = DccInst.target_speed;
-			}
 
 			// Set lights (depending on direction)
 			//dcc_update_functions();
@@ -201,12 +203,6 @@ void mot_speed_update(void)
 			// ----- Starting backwards move -----
 			// Update flag
 			DccInst.actual_dir = DIR_BACKWARDS;
-
-			if(Motor.booting == TRUE)
-			{
-				Motor.booting = FALSE;
-				DccInst.actual_speed = DccInst.target_speed;
-			}
 
 			// Set lights (depending on direction)
 			//dcc_update_functions();
@@ -225,6 +221,7 @@ void mot_speed_update(void)
 		Motor.running = TRUE;
 	}
 
+	Motor.booting = FALSE;
 }
 
 
@@ -253,10 +250,9 @@ void mot_pwm_update(void)
 		if(Motor.i >= 255)
 			Motor.i = 0;
 
-		Motor.Unew_mV = (int32_t)(Motor.Uref_op[abs(DccInst.actual_speed)]);
-
-		// 5 percent PWM control
+		// 5 percent PWM control (5% per speed)
 		Motor.ccr = (PWM_MOTOR_PERIOD_CNT * (uint32_t)(abs(DccInst.actual_speed))) / 20 ;
+		Motor.Unew_mV = ((int32_t)Adc.Uin_mV * (int32_t)Motor.ccr) / PWM_MOTOR_PERIOD_CNT;
 	}
 	else if(Mem.motor_ctrl.e == CTRL_OPEN_LOOP)
 	{
@@ -265,12 +261,9 @@ void mot_pwm_update(void)
 		if(Motor.i >= 255)
 			Motor.i = 0;
 
-		//
+		// Set PWM on voltage reference (Following voltage table)
 		Motor.Unew_mV = (int32_t)(Motor.Uref_op[abs(DccInst.actual_speed)]);
-
 		Motor.ccr = (((uint32_t)(Motor.Unew_mV)) * PWM_MOTOR_PERIOD_CNT) / Adc.Uin_mV;
-
-
 	}
 	else
 	{
@@ -380,8 +373,6 @@ void mot_pwm_update(void)
 
 	// Debug
 	memMotData.Uin_mV[Motor.i]  = Adc.Uin_mV;
-	//memMotData.Uin_mV[Motor.i]  = Motor.ccr;
-	//memMotData.Uin_mV[Motor.i]  = Motor.Umot_mV;
 	memMotData.Imot_mA[Motor.i] = Adc.Ibridge_mA;
 	memMotData.Uemf_mV[Motor.i] = Motor.Uemf_mV;
 	memMotData.Unew_mV[Motor.i] = Motor.Unew_mV;

@@ -40,7 +40,7 @@ typedef enum{
 	CTRL_CLOSE_LOOP = 1,
 	CTRL_CLOSE_LOOP_WITH_HALL = 2,
 	CTRL_OPEN_LOOP_5_PERCENT_PWM = 3,
-	CTRL_ADC_MEASUREMENT = 4
+	CTRL_ADC_MEASUREMENT = 4	// To be defined
 
 }motor_ctrl_t;
 
