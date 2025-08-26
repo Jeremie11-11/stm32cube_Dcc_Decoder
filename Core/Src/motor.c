@@ -237,14 +237,18 @@ void mot_pwm_update(void)
 	if(Motor.running != TRUE)
 		return;
 
+	// Calculate real motor applied voltage
+	Motor.Umot_mV = ((((int32_t)(Motor.ccr)) * Adc.Uin_mV) / PWM_MOTOR_PERIOD_CNT);
+
+	if(DccInst.actual_dir == DIR_FORWARDS)
+		Motor.Uemf_mV = Motor.Umot_mV - ((int32_t)Mem.Rcoil_fwd_mOhm * (int32_t)Adc.Ibridge_mA) / 1000;
+	else
+		Motor.Uemf_mV = Motor.Umot_mV - ((int32_t)Mem.Rcoil_bwd_mOhm * (int32_t)Adc.Ibridge_mA) / 1000;
+
 	if(Mem.motor_ctrl.e == CTRL_OPEN_LOOP_5_PERCENT_PWM)
 	{
 		// ----- Open loop 5 percent PWM control -----
 		// Mode used for motor identification, dimensioning and tests
-
-		Motor.Umot_mV = ((((int32_t)(Motor.ccr)) * Adc.Uin_mV) / PWM_MOTOR_PERIOD_CNT);
-
-		Motor.Uemf_mV = (Motor.Umot_mV - ((int32_t)(Adc.Ibridge_mA)/2)) - (22) * ((int32_t)(Adc.Ibridge_mA));
 
 		if(Motor.i >= 255)
 			Motor.i = 0;
@@ -257,12 +261,6 @@ void mot_pwm_update(void)
 	else if(Mem.motor_ctrl.e == CTRL_OPEN_LOOP)
 	{
 		// ----- Open loop PWM control -----
-
-		// ----- Calculate values in order to store them -----
-		// Calculate real motor voltage
-		Motor.Umot_mV = ((((int32_t)(Motor.ccr)) * Adc.Uin_mV) / PWM_MOTOR_PERIOD_CNT);
-
-		Motor.Uemf_mV = (Motor.Umot_mV - ((int32_t)(Adc.Ibridge_mA)/2)) - (22) * ((int32_t)(Adc.Ibridge_mA));
 
 		if(Motor.i >= 255)
 			Motor.i = 0;
@@ -291,22 +289,10 @@ void mot_pwm_update(void)
 			var_d = Mem.motor_d;
 			var_p2 = 1U;
 		}
-		else
-		{
-			// Calculate real motor voltage
-			//Uin = (Adc.Uin_mV - 300);
-			//if(Uin<0)
-				//Uin=0;
-			//Motor.Umot_mV = (Motor.ccr * Uin) / PWM_MOTOR_PERIOD_CNT;
-			Motor.Umot_mV = ((((int32_t)(Motor.ccr)) * Adc.Uin_mV) / PWM_MOTOR_PERIOD_CNT);
 
-			//Motor.Uemf_mV = Motor.Umot_mV - (22) * Adc.Ibridge_mA;
-			Motor.Uemf_mV = (Motor.Umot_mV - ((int32_t)(Adc.Ibridge_mA)/2)) - (22) * ((int32_t)(Adc.Ibridge_mA));
+		Motor_Uemf2_mV = (Motor.Uemf_old_mV + Motor.Uemf_mV)/2;
 
-			Motor_Uemf2_mV = (Motor.Uemf_old_mV + Motor.Uemf_mV)/2;
-
-			Motor.Uemf_avg_mV = (Motor.Uemf_avg_mV*7 + Motor.Uemf_mV)/8;
-		}
+		Motor.Uemf_avg_mV = (Motor.Uemf_avg_mV*7 + Motor.Uemf_mV)/8;
 
 		// REF
 		Motor.Uref_mV = Motor.Uref_cl[abs(DccInst.actual_speed)];

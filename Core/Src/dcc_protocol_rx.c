@@ -255,6 +255,6 @@ void dcc_update_functions(void)
 		tim_set_light(cab_light, DccInst.functions);
 		tim_set_light(opt_light, DccInst.functions);
 	}
-}*/
-
+}
+*/
 
