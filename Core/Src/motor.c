@@ -190,7 +190,7 @@ void mot_speed_update(void)
 			DccInst.actual_dir = DIR_FORWARDS;
 
 			// Set lights (depending on direction)
-			//dcc_update_functions();
+			dcc_update_functions();
 
 			// Set H-brige
 			tim_set_motor_bridge(DIR_FORWARDS);
@@ -205,7 +205,7 @@ void mot_speed_update(void)
 			DccInst.actual_dir = DIR_BACKWARDS;
 
 			// Set lights (depending on direction)
-			//dcc_update_functions();
+			dcc_update_functions();
 
 			// Set H-brige
 			tim_set_motor_bridge(DIR_BACKWARDS);

@@ -168,6 +168,7 @@ void dcc_check_for_new_messages(void)
 		if(msg.nb_data >= 2)
 			DccInst.functions = msg.fct;
 
+		// Update direction if not initialized (for reboot in run)
 		if((DccInst.actual_dir != DIR_FORWARDS) && (DccInst.actual_dir != DIR_BACKWARDS))
 			DccInst.actual_dir = DIR_FORWARDS;
 
@@ -175,7 +176,7 @@ void dcc_check_for_new_messages(void)
 		if((DccInst.dcc_target_speed == 0) && (DccInst.actual_speed == 0))
 			DccInst.actual_dir = DIR_FORWARDS;
 
-		//dcc_update_functions();
+		dcc_update_functions();
 	}
 	else if(msg.inst == speed_dir_inst_reverse)
 	{
@@ -187,15 +188,15 @@ void dcc_check_for_new_messages(void)
 		if(msg.nb_data >= 2)
 			DccInst.functions = msg.fct;
 
-		// Update direction if motor is stopped
+		// Update direction if not initialized (for reboot in run)
 		if((DccInst.actual_dir != DIR_FORWARDS) && (DccInst.actual_dir != DIR_BACKWARDS))
 			DccInst.actual_dir = DIR_BACKWARDS;
 
-		// Update direction if motor is stopped
+		// Update direction if motor is stopped (for lightning direction)
 		if((DccInst.dcc_target_speed == 0) && (DccInst.actual_speed == 0))
 			DccInst.actual_dir = DIR_BACKWARDS;
 
-		//dcc_update_functions();
+		dcc_update_functions();
 	}
 	else if(msg.inst == config_variable_inst)
 	{
@@ -219,42 +220,25 @@ void dcc_check_for_new_messages(void)
 	DccRx.msg_out_i = (DccRx.msg_out_i + 1) & (DCC_MAX_MESSAGES_QUEUE-1);
 
 }
-/*
+
 void dcc_update_functions(void)
 {
-	if(Adc.under_voltage == TRUE)
+	if(DccInst.actual_dir == DIR_FORWARDS)
 	{
-		GPIO_WRITE(FRONT_LIGHT, 0);
-		GPIO_WRITE(REAR_LIGHT, 0);
-		GPIO_WRITE(CAB_LIGHT, 0);
-		GPIO_WRITE(OPT_LIGHT, 0);
-
+		GPIO_WRITE(FRONT_LIGHT, (DccInst.functions >> 0) & 0x01);
+		GPIO_WRITE(REAR_LIGHT, (DccInst.functions >> 2) & 0x01);
 	}
 	else
 	{
-		if(DccInst.actual_dir == DIR_FORWARDS)
-		{
-			GPIO_WRITE(FRONT_LIGHT, (DccInst.functions >> 0) & 0x01);
-			GPIO_WRITE(REAR_LIGHT, (DccInst.functions >> 2) & 0x01);
-
-			tim_set_light(front_light, DccInst.functions);
-			tim_set_light(rear_light, DccInst.functions);
-		}
-		else
-		{
-			GPIO_WRITE(FRONT_LIGHT, (DccInst.functions >> 2) & 0x01);
-			GPIO_WRITE(REAR_LIGHT, (DccInst.functions >> 0) & 0x01);
-
-			tim_set_light(front_light, DccInst.functions >> 2);
-			tim_set_light(rear_light, DccInst.functions << 2);
-		}
-
-		GPIO_WRITE(CAB_LIGHT, (DccInst.functions >> 1) & 0x01);
-		GPIO_WRITE(OPT_LIGHT, (DccInst.functions >> 3) & 0x01);
-
-		tim_set_light(cab_light, DccInst.functions);
-		tim_set_light(opt_light, DccInst.functions);
+		GPIO_WRITE(FRONT_LIGHT, (DccInst.functions >> 2) & 0x01);
+		GPIO_WRITE(REAR_LIGHT, (DccInst.functions >> 0) & 0x01);
 	}
+
+	GPIO_WRITE(CAB_LIGHT, (DccInst.functions >> 1) & 0x01);
+	GPIO_WRITE(OPT_LIGHT, (DccInst.functions >> 3) & 0x01);
+
+	//tim_set_light(opt_light, DccInst.functions);
+
 }
-*/
+
 
