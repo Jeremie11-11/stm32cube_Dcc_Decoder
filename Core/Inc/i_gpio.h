@@ -117,7 +117,7 @@ struct RegPin {
 // --------------- GPIO function --------------
 // --------------------------------------------------
 
-
+void gpio_reinit(void);
 
 
 #endif /* INC_I_GPIO_H_ */
