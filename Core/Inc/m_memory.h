@@ -33,33 +33,39 @@ typedef struct{
 */
 
 typedef union {
+	motor_driver_t e;
+  uint32_t u32;
+} motor_driver_u32_t;
+
+typedef union {
 	motor_ctrl_t e;
   uint32_t u32;
 } motor_ctrl_u32_t;
 
 struct MEM_CONFIG_STRUCT{
 	uint32_t address;
+	motor_driver_u32_t motor_driver;
 	motor_ctrl_u32_t motor_ctrl;
 	uint32_t Rcoil_fwd_mOhm;
-	uint32_t Rcoil_bwd_mOhm;
 
+	uint32_t Rcoil_bwd_mOhm;
 	uint32_t Ustart_fwd_mV;
 	uint32_t Ustart_bwd_mV;
 	uint32_t Uref_min_start_mV;
-	uint32_t Uref_min_mV;
 
+	uint32_t Uref_min_mV;
 	uint32_t Uemf_max_stop_mV;
 	uint32_t Umin_mV;
 	uint32_t motor_p;
-	uint32_t motor_i;
 
+	uint32_t motor_i;
 	uint32_t motor_d;
 	uint32_t pwm_front_light;
 	uint32_t pwm_cab_light;
-	uint32_t pwm_rear_light;
 
+	uint32_t pwm_rear_light;
 	uint32_t pwm_opt_light;
-	uint32_t pad; // Ensure that MEM_STRUCT is a multiple of 8
+	//uint32_t pad; // Ensure that MEM_STRUCT is a multiple of 8
 } __attribute__ ((packed));
 
 

@@ -130,6 +130,9 @@ int main(void)
   MX_OPAMP1_Init();
   /* USER CODE BEGIN 2 */
 
+  // GPIO re-init for HW backward compatibility (see version.h)
+  gpio_reinit_for_hw_compatibility();
+
   mem_init();
   debug_set_led_status_red(LED_BOOT_EVENT, 1000);
 

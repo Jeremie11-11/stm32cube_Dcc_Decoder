@@ -27,9 +27,16 @@ typedef enum{
 // --------------------------------------------------
 // -------------- GPIO pin definition ---------------
 // --------------------------------------------------
+#if HARDWARE_VERSION == HARDWARE_VERSION_1v2
+
+#define LED1_GREEN {GPIOB, GPIO_PIN_14}
+#else
 
 #define LED1_GREEN {GPIOB, GPIO_PIN_12}
+#endif
+
 #define LED2_RED {GPIOB, GPIO_PIN_15}
+
 #define TEST_PIN1 {GPIOB, GPIO_PIN_10}
 #define TEST_PIN2 {GPIOB, GPIO_PIN_1}
 
@@ -117,7 +124,7 @@ struct RegPin {
 // --------------- GPIO function --------------
 // --------------------------------------------------
 
-void gpio_reinit(void);
+void gpio_reinit_for_hw_compatibility(void);
 
 
 #endif /* INC_I_GPIO_H_ */

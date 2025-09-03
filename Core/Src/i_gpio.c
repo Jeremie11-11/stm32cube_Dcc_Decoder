@@ -7,11 +7,11 @@
 
 #include "i_gpio.h"
 
-
+#if HARDWARE_VERSION == HARDWARE_VERSION_1v2
 static void gpio_init_HW_1v2(void);
+#endif
 
-
-void gpio_reinit(void)
+void gpio_reinit_for_hw_compatibility(void)
 {
 
 #if HARDWARE_VERSION == HARDWARE_VERSION_1v2
@@ -20,7 +20,7 @@ void gpio_reinit(void)
 
 }
 
-
+#if HARDWARE_VERSION == HARDWARE_VERSION_1v2
 static void gpio_init_HW_1v2(void)
 {
   GPIO_InitTypeDef GPIO_InitStruct = {0};
@@ -41,4 +41,4 @@ static void gpio_init_HW_1v2(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 }
-
+#endif
