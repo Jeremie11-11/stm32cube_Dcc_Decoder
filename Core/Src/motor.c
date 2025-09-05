@@ -361,8 +361,8 @@ void mot_pwm_update(void)
 	else if(Motor.ccr <= PWM_MIN)
 		Motor.ccr = PWM_MIN;
 
-	//tim_set_motor_pwm(DccInst.actual_dir, Motor.ccr);
-
+	tim_set_motor_pwm(DccInst.actual_dir, Motor.ccr);
+/*
 	if(Mem.motor_driver.e == DRIVER_UNIVERSAL_MOTOR)
 	{
 		// Both channel are updated, but only one is enabled.
@@ -386,7 +386,7 @@ void mot_pwm_update(void)
 			TIM1->CCR1 = 0;
 			TIM1->CCR2 = 0;
 		}
-	}
+	}*/
 
 	//
 	if(Motor.starting < 1000)

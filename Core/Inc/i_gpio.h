@@ -27,11 +27,10 @@ typedef enum{
 // --------------------------------------------------
 // -------------- GPIO pin definition ---------------
 // --------------------------------------------------
-#if HARDWARE_VERSION == HARDWARE_VERSION_1v2
 
+#if (HARDWARE_VERSION == HARDWARE_VERSION_1v1) || (HARDWARE_VERSION == HARDWARE_VERSION_1v2)
 #define LED1_GREEN {GPIOB, GPIO_PIN_14}
 #else
-
 #define LED1_GREEN {GPIOB, GPIO_PIN_12}
 #endif
 

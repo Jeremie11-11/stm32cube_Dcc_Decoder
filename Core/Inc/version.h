@@ -13,6 +13,7 @@
 
 // Hardware version definition for GPIO backward compatibility
 // (Only GPIO pin shift are possible)
+#define HARDWARE_VERSION_1v1 11
 #define HARDWARE_VERSION_1v2 12
 #define HARDWARE_VERSION_1v4 14
 
