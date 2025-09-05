@@ -37,7 +37,7 @@ typedef enum{
 
 typedef enum{
 	DRIVER_UNIVERSAL_MOTOR = 0, // Only low side of h-bridge enabled
-	DRIVER_DC_MOTOR_ = 1
+	DRIVER_DC_MOTOR = 1
 }motor_driver_t;
 
 typedef enum{

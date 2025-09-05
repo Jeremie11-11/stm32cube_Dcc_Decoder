@@ -47,38 +47,100 @@ void tim_set_motor_bridge(dir_t direction)
 	TIM1->ARR = PWM_MOTOR_PERIOD_CNT;
 	TIM1->CCR3 = 1;
 
-	if(direction == DIR_FORWARDS)
-	{
-		// Start channel 1
-		//HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
-		HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_1);
-
-		//HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_2);
-		HAL_TIMEx_PWMN_Stop(&htim1, TIM_CHANNEL_2);
-
-		HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
-	}
-	else if(direction == DIR_BACKWARDS)
-	{
-		// Start channel 2
-		//HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_1);
-		HAL_TIMEx_PWMN_Stop(&htim1, TIM_CHANNEL_1);
-
-		//HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
-		HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
-
-		HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
-	}
-	else
+	if((direction != DIR_FORWARDS) && (direction != DIR_BACKWARDS))
 	{
 		// Stop channel 1 and 2
-		//HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_1);
+		HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_1);
 		HAL_TIMEx_PWMN_Stop(&htim1, TIM_CHANNEL_1);
 
-		//HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_2);
+		HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_2);
 		HAL_TIMEx_PWMN_Stop(&htim1, TIM_CHANNEL_2);
 
 		HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
+	}
+	else if(Mem.motor_driver.e == DRIVER_UNIVERSAL_MOTOR)
+	{
+		if(direction == DIR_FORWARDS)
+		{
+			// Start channel 1
+			//HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+			HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_1);
+
+			//HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_2);
+			HAL_TIMEx_PWMN_Stop(&htim1, TIM_CHANNEL_2);
+
+			HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
+		}
+		else
+		{
+			// Start channel 2
+			//HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_1);
+			HAL_TIMEx_PWMN_Stop(&htim1, TIM_CHANNEL_1);
+
+			//HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
+			HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
+
+			HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
+		}
+	}
+	else if(Mem.motor_driver.e == DRIVER_DC_MOTOR)
+	{
+		if(direction == DIR_FORWARDS)
+		{
+			// Start channel 1
+			HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+			HAL_TIMEx_PWMN_Stop(&htim1, TIM_CHANNEL_1);
+
+			TIM1->CCR2 = PWM_MOTOR_PERIOD_CNT;
+			HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_2);
+			HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
+
+			HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
+		}
+		else
+		{
+			// Start channel 2
+			TIM1->CCR1 = PWM_MOTOR_PERIOD_CNT;
+			HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_1);
+			HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+
+			HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
+			HAL_TIMEx_PWMN_Stop(&htim1, TIM_CHANNEL_2);
+
+			HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
+		}
+	}
+
+}
+
+void tim_set_tim1_channel_polarity()
+{
+  TIM_OC_InitTypeDef sConfigOC = {0};
+
+	sConfigOC.OCMode = TIM_OCMODE_PWM1;
+	sConfigOC.Pulse = 0;
+
+  if(Mem.motor_driver.e == DRIVER_UNIVERSAL_MOTOR)
+  {
+		sConfigOC.OCPolarity = TIM_OCPOLARITY_LOW;
+		sConfigOC.OCNPolarity = TIM_OCNPOLARITY_HIGH;
+  }
+  else if(Mem.motor_driver.e == DRIVER_DC_MOTOR)
+  {
+		sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+		sConfigOC.OCNPolarity = TIM_OCNPOLARITY_LOW;
+  }
+
+	sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+	sConfigOC.OCIdleState = TIM_OCIDLESTATE_RESET;
+	sConfigOC.OCNIdleState = TIM_OCNIDLESTATE_RESET;
+	if (HAL_TIM_PWM_ConfigChannel(&htim1, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+	{
+		Error_Handler();
+	}
+	if (HAL_TIM_PWM_ConfigChannel(&htim1, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
+	{
+		Error_Handler();
 	}
 }
 

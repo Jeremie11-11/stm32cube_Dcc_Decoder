@@ -7,22 +7,20 @@
 
 #include "i_gpio.h"
 
-#if HARDWARE_VERSION == HARDWARE_VERSION_1v2
+
 static void gpio_init_HW_1v2(void);
-#endif
+
 
 void gpio_reinit_for_hw_compatibility(void)
 {
-
-#if HARDWARE_VERSION == HARDWARE_VERSION_1v2
 	gpio_init_HW_1v2();
-#endif
 
 }
 
-#if HARDWARE_VERSION == HARDWARE_VERSION_1v2
+
 static void gpio_init_HW_1v2(void)
 {
+#if HARDWARE_VERSION == HARDWARE_VERSION_1v2
   GPIO_InitTypeDef GPIO_InitStruct = {0};
 
   // Configure GPIO pin Output Level
@@ -40,5 +38,6 @@ static void gpio_init_HW_1v2(void)
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-}
 #endif
+}
+
