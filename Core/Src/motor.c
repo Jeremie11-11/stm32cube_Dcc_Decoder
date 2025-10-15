@@ -21,13 +21,10 @@ extern DCC_INSTRUCTION_STRUCT DccInst;
 extern ADC_STRUCT Adc;
 
 
-MOTOR_STRUCT Motor = {
-		.running = FALSE,
-		.booting = TRUE
-};
+MOTOR_STRUCT Motor;
 
 
-void mot_init(void)
+void mot_init(uint32_t backup_valid)
 {
 	uint32_t i;
 
@@ -35,6 +32,15 @@ void mot_init(void)
 	{
 		Motor.Uref_cl[i] = 0 + i * 300;
 		Motor.Uref_op[i] = 4000 + i * 500;
+	}
+
+	if(backup_valid == TRUE)
+	{
+		Motor.use_backup_register = TRUE;
+	}
+	else
+	{
+		Motor.use_backup_register = FALSE;
 	}
 }
 
@@ -85,9 +91,9 @@ void mot_speed_update(void)
 		// Reload the counter
 		cnt_start(COUNTER_MOTOR_SPEED_UPDATE, 100);
 	}
-	else if(DccInst.signal_state == signal_orange)
+	else if(DccInst.signal_state == signal_yellow)
 	{
-		// ORANGE signal: Speed limitation
+		// YELLOW signal: Speed limitation
 		if(DccInst.dcc_target_speed >= 0)
 		{
 			if(DccInst.dcc_target_speed > 5)
@@ -126,41 +132,47 @@ void mot_speed_update(void)
 			// Changing direction
 			DccInst.actual_speed = 0;
 	}
-	// ----- Close loop speed control -----
-	else if(DccInst.target_speed > DccInst.actual_speed)
+	else
 	{
-		if((DccInst.actual_speed == 1) && ((Motor.Uemf_avg_mV > (Mem.Uref_min_start_mV-50)) || (Motor.starting >= 80)))
-			// Acceleration only if the rotor is moving
-			DccInst.actual_speed++;
-		else if((DccInst.actual_speed == -1) && (Motor.Uemf_avg_mV <= (int32_t)Mem.Uemf_max_stop_mV))
-			// Stopping only if the speed is slow
-			DccInst.actual_speed++;
-		else
-			// Adapt speed
-			DccInst.actual_speed++;
-	}
-	else if(DccInst.target_speed < DccInst.actual_speed)
-	{
-		if((DccInst.actual_speed == -1) && ((Motor.Uemf_avg_mV > (Mem.Uref_min_start_mV-50)) || (Motor.starting >= 80)))
-			// Acceleration only if the rotor is moving
-			DccInst.actual_speed--;
-		else if((DccInst.actual_speed == 1) && (Motor.Uemf_avg_mV <= (int32_t)Mem.Uemf_max_stop_mV))
-			// Stopping only if the speed is slow
-			DccInst.actual_speed--;
-		else
-			// Adapt speed
-			DccInst.actual_speed--;
+		// ----- Close loop speed control -----
+		if(Motor.use_backup_register == FALSE)
+		{
+			if(DccInst.target_speed > DccInst.actual_speed)
+			{
+				if((DccInst.actual_speed == 1) && ((Motor.Uemf_avg_mV > (Mem.Uref_min_start_mV-50)) || (Motor.starting >= 80)))
+					// Acceleration only if the rotor is moving
+					DccInst.actual_speed++;
+				else if((DccInst.actual_speed == -1) && (Motor.Uemf_avg_mV <= (int32_t)Mem.Uemf_max_stop_mV))
+					// Stopping only if the speed is slow
+					DccInst.actual_speed++;
+				else
+					// Adapt speed
+					DccInst.actual_speed++;
+			}
+			else if(DccInst.target_speed < DccInst.actual_speed)
+			{
+				if((DccInst.actual_speed == -1) && ((Motor.Uemf_avg_mV > (Mem.Uref_min_start_mV-50)) || (Motor.starting >= 80)))
+					// Acceleration only if the rotor is moving
+					DccInst.actual_speed--;
+				else if((DccInst.actual_speed == 1) && (Motor.Uemf_avg_mV <= (int32_t)Mem.Uemf_max_stop_mV))
+					// Stopping only if the speed is slow
+					DccInst.actual_speed--;
+				else
+					// Adapt speed
+					DccInst.actual_speed--;
+			}
+		}
 	}
 
 	if(DccInst.actual_speed == 0)
 	{
-		// Disable H-bridge
-		tim_set_motor_bridge(DIR_STOPPED);
-
 		if(Motor.running != FALSE)
 		{
 			// PWM control is now disable
 			Motor.running = FALSE;
+
+			// Disable H-bridge
+			tim_set_motor_bridge(DIR_STOPPED);
 
 			mot_current_source(DISABLE);
 
@@ -173,13 +185,9 @@ void mot_speed_update(void)
 			mem_write_motor();
 		}
 	}
-	else if(old_speed == 0)
+	else if((old_speed == 0) || (Motor.use_backup_register == TRUE))
 	{
 		// ----- Preparing move -----
-
-		// Skip acceleration ramp if booting
-		if(Motor.booting == TRUE)
-			DccInst.actual_speed = DccInst.target_speed;
 
 		mot_current_source(ENABLE);
 
@@ -221,7 +229,8 @@ void mot_speed_update(void)
 		Motor.running = TRUE;
 	}
 
-	Motor.booting = FALSE;
+	Motor.use_backup_register = FALSE;
+	dcc_backup_info();
 }
 
 

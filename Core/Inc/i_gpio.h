@@ -15,7 +15,7 @@ typedef enum{
     LIGHT_ALL_OFF	= 0,
 		LIGHT_ALL_ON,
 		LIGHT_RED,
-		LIGHT_ORANGE,
+		LIGHT_YELLOW,
 		LIGHT_GREEN,
 		LIGHT_BLUE_ON,
 		LIGHT_BLUE_OFF
@@ -29,12 +29,15 @@ typedef enum{
 // --------------------------------------------------
 
 #if (HARDWARE_VERSION == HARDWARE_VERSION_1v1) || (HARDWARE_VERSION == HARDWARE_VERSION_1v2)
-#define LED1_GREEN {GPIOB, GPIO_PIN_14}
+	#define LED_STAT_GREEN {GPIOB, GPIO_PIN_14}
+	#define LED_STAT_RED {GPIOB, GPIO_PIN_15}
 #else
-#define LED1_GREEN {GPIOB, GPIO_PIN_12}
+	#define LED_STAT_GREEN {GPIOB, GPIO_PIN_12}
+	#define LED_STAT_RED {GPIOB, GPIO_PIN_15}
 #endif
 
-#define LED2_RED {GPIOB, GPIO_PIN_15}
+#define CH1_HIGH_SIDE {GPIOA, GPIO_PIN_8}
+#define CH2_HIGH_SIDE {GPIOA, GPIO_PIN_9}
 
 #define TEST_PIN1 {GPIOB, GPIO_PIN_10}
 #define TEST_PIN2 {GPIOB, GPIO_PIN_1}

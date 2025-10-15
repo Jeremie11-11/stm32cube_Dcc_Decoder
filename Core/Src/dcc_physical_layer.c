@@ -23,7 +23,7 @@ DCC_DEBUG_STRUCT DccDebug;
 DCC_DEBUG2_STRUCT DccDebug2;
 
 
-void dcc_init(void)
+void dcc_physical_layer_init(void)
 {
 	DccDebug.recieved_msg = 0;
 	DccSignal.in_idx = 0;
@@ -274,16 +274,16 @@ void signal_update()
 		{
 			if(DccSignal.green_cnt < 10)
 				DccSignal.green_cnt++;
-			if(DccSignal.orange_cnt > 0)
-				DccSignal.orange_cnt--;
+			if(DccSignal.yellow_cnt > 0)
+				DccSignal.yellow_cnt--;
 			if(DccSignal.red_cnt > 0)
 				DccSignal.red_cnt--;
 		}
 		// Between 200uS and 600uS
 		else if(timeout < 100)
 		{
-			if(DccSignal.orange_cnt < 10)
-				DccSignal.orange_cnt++;
+			if(DccSignal.yellow_cnt < 10)
+				DccSignal.yellow_cnt++;
 			if(DccSignal.green_cnt > 0)
 				DccSignal.green_cnt--;
 			if(DccSignal.red_cnt > 0)
@@ -296,48 +296,50 @@ void signal_update()
 				DccSignal.red_cnt++;
 			if(DccSignal.green_cnt > 0)
 				DccSignal.green_cnt--;
-			if(DccSignal.orange_cnt > 0)
-				DccSignal.orange_cnt--;
+			if(DccSignal.yellow_cnt > 0)
+				DccSignal.yellow_cnt--;
 		}
 		else
 		{
 
 		}
 
-		if(DccSignal.signal_state == signal_green)
+		if(DccInst.signal_state == signal_green)
 		{
-			GPIO_WRITE(DEBUG_LED_ORANGE, FALSE);
-			GPIO_WRITE(DEBUG_LED_RED, FALSE);
+			// ----- Signal is green -----
 
-			if(DccSignal.orange_cnt > (DccSignal.green_cnt+2))
-				DccSignal.signal_state = signal_orange;
+			// Check for signal state change
+			if(DccSignal.yellow_cnt > (DccSignal.green_cnt+2))
+				DccInst.signal_state = signal_yellow;
 			else if(DccSignal.red_cnt > (DccSignal.green_cnt+2))
-				DccSignal.signal_state = signal_red;
+				DccInst.signal_state = signal_red;
 		}
-		else if(DccSignal.signal_state == signal_orange)
+		else if(DccInst.signal_state == signal_yellow)
 		{
-			GPIO_WRITE(DEBUG_LED_ORANGE, TRUE);
-			GPIO_WRITE(DEBUG_LED_RED, FALSE);
+			// ----- Signal is yellow -----
 
-			if(DccSignal.green_cnt > (DccSignal.orange_cnt+2))
-				DccSignal.signal_state = signal_green;
-			else if(DccSignal.red_cnt > (DccSignal.orange_cnt+2))
-				DccSignal.signal_state = signal_red;
+			// Check for signal state change
+			if(DccSignal.green_cnt > (DccSignal.yellow_cnt+2))
+				DccInst.signal_state = signal_green;
+			else if(DccSignal.red_cnt > (DccSignal.yellow_cnt+2))
+				DccInst.signal_state = signal_red;
 		}
 		else
 		{
-			GPIO_WRITE(DEBUG_LED_ORANGE, FALSE);
-			GPIO_WRITE(DEBUG_LED_RED, TRUE);
+			// ----- Signal is red -----
 
-			if(DccSignal.orange_cnt > (DccSignal.red_cnt+2))
-				DccSignal.signal_state = signal_orange;
+			// Check for signal state change
+			if(DccSignal.yellow_cnt > (DccSignal.red_cnt+2))
+				DccInst.signal_state = signal_yellow;
 			else if(DccSignal.green_cnt > (DccSignal.red_cnt+2))
-				DccSignal.signal_state = signal_green;
+				DccInst.signal_state = signal_green;
 		}
 
 		// Update signal
+		/*
 		if(DccInst.signal_state != DccSignal.signal_state)
 			DccInst.signal_state = DccSignal.signal_state;
+*/
 
 		DccSignal.out_idx++;
 		DccSignal.out_idx &= 0x07;

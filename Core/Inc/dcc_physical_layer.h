@@ -58,9 +58,9 @@ typedef struct{
 
 typedef struct{
 	uint16_t green_cnt;
-	uint16_t orange_cnt;
+	uint16_t yellow_cnt;
 	uint16_t red_cnt;
-	signal_state_t signal_state;
+	//signal_state_t signal_state;
 	uint16_t timeout_tab[8];
 	uint32_t in_idx;
 	uint32_t out_idx;
@@ -84,7 +84,7 @@ typedef struct{
 	uint32_t idx;
 } DCC_DEBUG2_STRUCT;
 
-void dcc_init(void);
+void dcc_physical_layer_init(void);
 
 void dcc_tx_update(void);
 

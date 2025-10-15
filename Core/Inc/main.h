@@ -70,6 +70,10 @@ void Error_Handler(void);
 #define GPIO_Output___LED_STAT_GREEN_GPIO_Port GPIOB
 #define GPIO_Output___LED_STAT_RED_Pin GPIO_PIN_15
 #define GPIO_Output___LED_STAT_RED_GPIO_Port GPIOB
+#define GPIO_Output___TIM1_CH1_Pin GPIO_PIN_8
+#define GPIO_Output___TIM1_CH1_GPIO_Port GPIOA
+#define GPIO_Output___TIM1_CH2_Pin GPIO_PIN_9
+#define GPIO_Output___TIM1_CH2_GPIO_Port GPIOA
 
 /* USER CODE BEGIN Private defines */
 

@@ -81,15 +81,6 @@ struct MEM_MOTOR_DATA_STRUCT{
 	int16_t Unew_mV[256];
 } __attribute__ ((packed));
 
-struct MEM_ASYM_VOLATGE_STRUCT{
-	int16_t Uw_mV[256];
-	int16_t Ux_mV[256];
-	int16_t Uy_mV[256];
-	int16_t Uz_mV[256];
-
-	uint32_t index1;
-	uint32_t index2;
-} __attribute__ ((packed));
 
 void mem_init(void);
 
@@ -103,6 +94,26 @@ void mem_write_config(void);
 
 void mem_write_motor(void);
 
-void mem_write_asym_data(void);
+// -------------------------------------------------------------------
+// ------------------------- Backup register -------------------------
+// -------------------------------------------------------------------
+
+#define MEM_BACKUP_MAGIC_WORD 0xA5A5A5A5
+#define MEM_BACKUP_UNVALID_WORD 0xFFFFFFFF
+
+
+typedef enum{
+	BACKUP_IDX__MAGIC_WORD = 0,
+	BACKUP_IDX__DCC_INFO_0 = 1,
+	BACKUP_IDX__DCC_INFO_1 = 2,
+
+} backup_idx_t;
+
+
+void mem_write_backup_register(backup_idx_t index, uint32_t value);
+
+uint32_t mem_read_backup_register(backup_idx_t index);
+
+uint32_t mem_is_backup_valid(void);
 
 #endif /* INC_M_MEMORY_H_ */

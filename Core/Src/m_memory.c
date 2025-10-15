@@ -10,10 +10,12 @@
 #include <string.h>
 
 
+extern RTC_HandleTypeDef hrtc;
+
+
 struct MEM_CONFIG_STRUCT Mem;
 struct MEM_MOTOR_STATUS_STRUCT memMotStat;
 struct MEM_MOTOR_DATA_STRUCT memMotData;
-struct MEM_ASYM_VOLATGE_STRUCT memAsymData;
 
 extern DCC_INSTRUCTION_STRUCT DccInst;
 
@@ -157,7 +159,39 @@ void mem_write_motor(void)
 }
 
 
-void mem_write_asym_data(void)
+void mem_write_backup_register(backup_idx_t index, uint32_t value)
 {
-	mem_write_page(PAGE_ASYM_VOLTAGE, (void *)&memAsymData, FLASH_PAGE_SIZE);
+	HAL_PWR_EnableBkUpAccess();
+
+	HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR0, MEM_BACKUP_UNVALID_WORD);
+
+	HAL_RTCEx_BKUPWrite(&hrtc, index, value);
+
+	HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR0, MEM_BACKUP_MAGIC_WORD);
+}
+
+uint32_t mem_read_backup_register(backup_idx_t index)
+{
+	return HAL_RTCEx_BKUPRead(&hrtc, index);
+}
+
+uint32_t mem_is_backup_valid(void)
+{
+	uint32_t response = FALSE;
+
+	if(mem_read_backup_register(BACKUP_IDX__MAGIC_WORD) == MEM_BACKUP_MAGIC_WORD)
+		response = TRUE;
+
+	return response;
+}
+
+uint32_t mem_update_backup_crc(void)
+{
+	uint32_t calculated_crc = 0;
+
+	for(uint32_t i=RTC_BKP_DR0; i<=RTC_BKP_DR30; i++)
+	{
+		calculated_crc = calculated_crc ^ HAL_RTCEx_BKUPRead(&hrtc, RTC_BKP_DR0);
+	}
+	return TRUE;
 }

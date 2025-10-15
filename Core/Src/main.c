@@ -54,6 +54,8 @@ DMA_HandleTypeDef hdma_adc1;
 
 OPAMP_HandleTypeDef hopamp1;
 
+RTC_HandleTypeDef hrtc;
+
 TIM_HandleTypeDef htim1;
 TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim6;
@@ -74,6 +76,7 @@ static void MX_ADC1_Init(void);
 static void MX_TIM15_Init(void);
 static void MX_TIM6_Init(void);
 static void MX_OPAMP1_Init(void);
+static void MX_RTC_Init(void);
 /* USER CODE BEGIN PFP */
 
 static void Disable_Bootloader_If_Enabled(void);
@@ -128,16 +131,28 @@ int main(void)
   MX_TIM15_Init();
   MX_TIM6_Init();
   MX_OPAMP1_Init();
+  MX_RTC_Init();
   /* USER CODE BEGIN 2 */
 
   // GPIO re-init for HW backward compatibility (see version.h)
   gpio_reinit_for_hw_compatibility();
 
   mem_init();
-  debug_set_led_status_red(LED_BOOT_EVENT, 1000);
 
-  mot_init();
-  dcc_init();
+  if(mem_is_backup_valid() == TRUE)
+  {
+  	// ----- Backup register are valid -----
+  	debug_set_led_status_red(LED_BOOT_EVENT, 200);
+  	dcc_init(TRUE);
+  	mot_init(TRUE);
+  }
+  else
+  {
+  	// ----- Backup register are invalid -----
+  	debug_set_led_status_red(LED_BOOT_EVENT, 2000);
+  	dcc_init(FALSE);
+  	mot_init(FALSE);
+  }
 
   dma_init();
   adc_init();
@@ -153,13 +168,13 @@ int main(void)
   	// TEST_PIN1 is toggled each loop.
   	GPIO_TOGGLE(TEST_PIN1);
 
+  	// Update debug Leds state (Green for DCC and red for errors)
   	debug_leds_update();
-
-  	//asym_check_for_signal();
 
   	// Decode the transmitted bit into messages
 		dcc_rx_update();
 
+		// Update lights signal (Green, yellow, red)
 		signal_update();
 
 		// Decode and execute the received messages
@@ -168,7 +183,7 @@ int main(void)
 		// Update motor target speed (slope management) @200ms
 		mot_speed_update();
 
-		//if(Mem.event_ctrl.bit.sleep_enable == _ENABLE)
+		// Enter sleep mode until next interrupt
 		HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
 
     /* USER CODE END WHILE */
@@ -197,7 +212,8 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_MSI;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_LSI|RCC_OSCILLATORTYPE_MSI;
+  RCC_OscInitStruct.LSIState = RCC_LSI_ON;
   RCC_OscInitStruct.MSIState = RCC_MSI_ON;
   RCC_OscInitStruct.MSICalibrationValue = 0;
   RCC_OscInitStruct.MSIClockRange = RCC_MSIRANGE_6;
@@ -350,6 +366,43 @@ static void MX_OPAMP1_Init(void)
 }
 
 /**
+  * @brief RTC Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_RTC_Init(void)
+{
+
+  /* USER CODE BEGIN RTC_Init 0 */
+
+  /* USER CODE END RTC_Init 0 */
+
+  /* USER CODE BEGIN RTC_Init 1 */
+
+  /* USER CODE END RTC_Init 1 */
+
+  /** Initialize RTC Only
+  */
+  hrtc.Instance = RTC;
+  hrtc.Init.HourFormat = RTC_HOURFORMAT_24;
+  hrtc.Init.AsynchPrediv = 127;
+  hrtc.Init.SynchPrediv = 255;
+  hrtc.Init.OutPut = RTC_OUTPUT_DISABLE;
+  hrtc.Init.OutPutRemap = RTC_OUTPUT_REMAP_NONE;
+  hrtc.Init.OutPutPolarity = RTC_OUTPUT_POLARITY_HIGH;
+  hrtc.Init.OutPutType = RTC_OUTPUT_TYPE_OPENDRAIN;
+  hrtc.Init.OutPutPullUp = RTC_OUTPUT_PULLUP_NONE;
+  if (HAL_RTC_Init(&hrtc) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN RTC_Init 2 */
+
+  /* USER CODE END RTC_Init 2 */
+
+}
+
+/**
   * @brief TIM1 Initialization Function
   * @param None
   * @retval None
@@ -372,8 +425,8 @@ static void MX_TIM1_Init(void)
   htim1.Instance = TIM1;
   htim1.Init.Prescaler = 0;
   htim1.Init.CounterMode = TIM_COUNTERMODE_CENTERALIGNED1;
-  htim1.Init.Period = 2000;
-  htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim1.Init.Period = 1000;
+  htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV2;
   htim1.Init.RepetitionCounter = 0;
   htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
   if (HAL_TIM_Base_Init(&htim1) != HAL_OK)
@@ -418,7 +471,7 @@ static void MX_TIM1_Init(void)
   sBreakDeadTimeConfig.OffStateRunMode = TIM_OSSR_DISABLE;
   sBreakDeadTimeConfig.OffStateIDLEMode = TIM_OSSI_DISABLE;
   sBreakDeadTimeConfig.LockLevel = TIM_LOCKLEVEL_OFF;
-  sBreakDeadTimeConfig.DeadTime = 20;
+  sBreakDeadTimeConfig.DeadTime = 0;
   sBreakDeadTimeConfig.BreakState = TIM_BREAK_DISABLE;
   sBreakDeadTimeConfig.BreakPolarity = TIM_BREAKPOLARITY_HIGH;
   sBreakDeadTimeConfig.BreakFilter = 0;
@@ -610,7 +663,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOH, GPIO_PIN_0, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2|GPIO_Output___TIM1_CH1_Pin|GPIO_Output___TIM1_CH2_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, GPIO_Output___LED_STAT_GREEN_Pin|GPIO_Output___LED_STAT_RED_Pin, GPIO_PIN_RESET);
@@ -629,8 +682,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOH, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : PA2 */
-  GPIO_InitStruct.Pin = GPIO_PIN_2;
+  /*Configure GPIO pins : PA2 GPIO_Output___TIM1_CH1_Pin GPIO_Output___TIM1_CH2_Pin */
+  GPIO_InitStruct.Pin = GPIO_PIN_2|GPIO_Output___TIM1_CH1_Pin|GPIO_Output___TIM1_CH2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;

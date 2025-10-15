@@ -47,17 +47,37 @@ void tim_set_motor_bridge(dir_t direction)
 	TIM1->ARR = PWM_MOTOR_PERIOD_CNT;
 	TIM1->CCR3 = 1;
 
-	tim_set_tim1_channel_polarity();
+	//tim_set_tim1_channel_polarity();
 
 	if((direction != DIR_FORWARDS) && (direction != DIR_BACKWARDS))
 	{
-		// Stop channel 1 and 2
+		// ----- Stop channel 1 and 2 -----
+
+		GPIO_WRITE(CH1_HIGH_SIDE, FALSE);
+		GPIO_WRITE(CH2_HIGH_SIDE, FALSE);
+
+		TIM1->CCR1 = 0;
+		TIM1->CCR2 = 0;
+		HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_1);
+		HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
+
+
+		/*
+		__HAL_TIM_DISABLE(&htim1);
+		__HAL_TIM_SET_COUNTER(&htim1, 0);
+
+		__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0);
+		__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 0);
+		htim1.Instance->EGR = TIM_EGR_UG; // Force update, load preloads
+
 		HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_1);
-		HAL_TIMEx_PWMN_Stop(&htim1, TIM_CHANNEL_1);
+		HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_1);
 
 		HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_2);
-		HAL_TIMEx_PWMN_Stop(&htim1, TIM_CHANNEL_2);
+		HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
 
+		__HAL_TIM_ENABLE(&htim1);
+*/
 		HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
 	}
 	else if(Mem.motor_driver.e == DRIVER_UNIVERSAL_MOTOR)
@@ -88,22 +108,38 @@ void tim_set_motor_bridge(dir_t direction)
 #else
 		if(direction == DIR_FORWARDS)
 		{
-			// Start channel 1
-			//HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
-			HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_1);
+			// ----- Universal motor forwards -----
+			// H-bridge high side disabled
+			// Using channel TIM1_CH1N with PWM drive
+			// TIM1_CH2N set to zero
 
-			//HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_2);
-			HAL_TIMEx_PWMN_Stop(&htim1, TIM_CHANNEL_2);
+			// Disable H-bridge high side
+			GPIO_WRITE(CH1_HIGH_SIDE, FALSE);
+			GPIO_WRITE(CH2_HIGH_SIDE, FALSE);
+
+			// Init H-bridge low side
+			TIM1->CCR1 = 0;
+			TIM1->CCR2 = 0;
+			HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_1);
+			HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
 
 			HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
 		}
 		else
 		{
-			// Start channel 2
-			//HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_1);
-			HAL_TIMEx_PWMN_Stop(&htim1, TIM_CHANNEL_1);
+			// ----- Universal motor backwards -----
+			// H-bridge high side disabled
+			// Using channel TIM1_CH2N with PWM drive
+			// TIM1_CH1N set to zero
 
-			//HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
+			// Disable H-bridge high side
+			GPIO_WRITE(CH1_HIGH_SIDE, FALSE);
+			GPIO_WRITE(CH2_HIGH_SIDE, FALSE);
+
+			// Init H-bridge low side
+			TIM1->CCR1 = 0;
+			TIM1->CCR2 = 0;
+			HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_1);
 			HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
 
 			HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
@@ -115,30 +151,46 @@ void tim_set_motor_bridge(dir_t direction)
 	{
 		if(direction == DIR_FORWARDS)
 		{
-			// Start channel 1
-			HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
-			HAL_TIMEx_PWMN_Stop(&htim1, TIM_CHANNEL_1);
+			// ----- DC motor forwards -----
+			// H-bridge high side enabled (V+ on CH2)
+			// Using channel TIM1_CH1N with PWM drive
+			// TIM1_CH2N set to zero
 
-			HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_2);
+			// Init H-bridge low side
+			TIM1->CCR1 = 0;
+			TIM1->CCR2 = 0;
+			HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_1);
 			HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
+
+			// Enable H-bridge high side
+			GPIO_WRITE(CH1_HIGH_SIDE, FALSE);
+			GPIO_WRITE(CH2_HIGH_SIDE, TRUE);
 
 			HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
 		}
 		else
 		{
-			// Start channel 2
-			HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_1);
-			HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_1);
+			// ----- DC motor backwards -----
+			// H-bridge high side enabled (V+ on CH1)
+			// Using channel TIM1_CH2N with PWM drive
+			// TIM1_CH1N set to zero
 
-			HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
-			HAL_TIMEx_PWMN_Stop(&htim1, TIM_CHANNEL_2);
+			// Init H-bridge low side
+			TIM1->CCR1 = 0;
+			TIM1->CCR2 = 0;
+			HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_1);
+			HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
+
+			// Enable H-bridge high side
+			GPIO_WRITE(CH1_HIGH_SIDE, TRUE);
+			GPIO_WRITE(CH2_HIGH_SIDE, FALSE);
 
 			HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
 		}
 	}
 
 }
-
+/*
 void tim_set_tim1_channel_polarity()
 {
   TIM_OC_InitTypeDef sConfigOC = {0};
@@ -154,7 +206,8 @@ void tim_set_tim1_channel_polarity()
   else if(Mem.motor_driver.e == DRIVER_DC_MOTOR)
   {
 		sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
-		sConfigOC.OCNPolarity = TIM_OCNPOLARITY_LOW;
+		//sConfigOC.OCNPolarity = TIM_OCNPOLARITY_LOW;
+		sConfigOC.OCNPolarity = TIM_OCNPOLARITY_HIGH;
   }
 
 	sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
@@ -169,18 +222,20 @@ void tim_set_tim1_channel_polarity()
 		Error_Handler();
 	}
 }
-
+*/
 void tim_set_motor_pwm(dir_t direction, uint32_t pwm)
 {
 	if(direction == DIR_FORWARDS)
 	{
 		// Start channel 1
 		TIM1->CCR1 = pwm;
+		//TIM1->CCR2 = PWM_MOTOR_PERIOD_CNT;
 		TIM1->CCR2 = 0;
 	}
 	else if(direction == DIR_BACKWARDS)
 	{
 		// Start channel 2
+		//TIM1->CCR1 = PWM_MOTOR_PERIOD_CNT;
 		TIM1->CCR1 = 0;
 		TIM1->CCR2 = pwm;
 	}

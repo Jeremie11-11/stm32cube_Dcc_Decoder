@@ -15,7 +15,7 @@ void debug_leds_update(void)
 	// 20ms: Errors
 	if(cnt_read(COUNTER_LED_STATUS_RED) == 0)
 	{
-		GPIO_WRITE(LED2_RED, FALSE);
+		GPIO_WRITE(LED_STAT_RED, FALSE);
 	}
 
 	// LED_STATUS_GREEN blinking
@@ -33,7 +33,7 @@ void debug_set_led_status_red(led_event_t event, uint32_t time_ms)
 {
 	if(LEDS_EVENT_REGISTER & event)
 	{
-		GPIO_WRITE(LED2_RED, TRUE);
+		GPIO_WRITE(LED_STAT_RED, TRUE);
 		cnt_start_or_extend(COUNTER_LED_STATUS_RED, time_ms);
 	}
 }
@@ -43,7 +43,7 @@ void debug_set_led_status_green(led_event_t event, uint32_t time_ms)
 {
 	if(LEDS_EVENT_REGISTER & event)
 	{
-		GPIO_WRITE(LED1_GREEN, TRUE);
+		GPIO_WRITE(LED_STAT_GREEN, TRUE);
 		cnt_start(COUNTER_DCC_RX_TIMEOUT, time_ms);
 	}
 }
@@ -51,14 +51,14 @@ void debug_set_led_status_green(led_event_t event, uint32_t time_ms)
 
 void debug_toggle_led_status_green(led_event_t event, uint32_t time_ms)
 {
-	if(GPIO_READ(LED1_GREEN) == TRUE)
+	if(GPIO_READ(LED_STAT_GREEN) == TRUE)
 	{
-		GPIO_WRITE(LED1_GREEN, FALSE);
+		GPIO_WRITE(LED_STAT_GREEN, FALSE);
 	}
 	else
 	{
 		if(LEDS_EVENT_REGISTER & event)
-			GPIO_WRITE(LED1_GREEN, TRUE);
+			GPIO_WRITE(LED_STAT_GREEN, TRUE);
 	}
 	cnt_start(COUNTER_DCC_RX_TIMEOUT, time_ms);
 }

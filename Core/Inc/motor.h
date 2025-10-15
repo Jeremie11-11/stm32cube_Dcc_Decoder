@@ -28,13 +28,13 @@ typedef struct{
 	int32_t starting;
 	int32_t step;
 	int32_t running;
-	int32_t booting;
+	int32_t use_backup_register;
 	int32_t init_current[100];
 	uint16_t Uref_cl[29];
 	uint16_t Uref_op[29];
 } MOTOR_STRUCT;
 
-void mot_init(void);
+void mot_init(uint32_t backup_valid);
 
 void mot_speed_update(void);
 

@@ -22,9 +22,9 @@ typedef enum{
 
 
 typedef enum{
-	signal_red = 0,
-	signal_orange = 1,
-	signal_green = 2
+	signal_green = 0,
+	signal_yellow = 1,
+	signal_red = 2
 }signal_state_t;
 
 

@@ -51,6 +51,10 @@ typedef struct{
 } DCC_INSTRUCTION_STRUCT;
 
 
+void dcc_init(uint32_t backup_valid);
+
+void dcc_backup_info(void);
+
 void dcc_decode(DCC_INSTRUCTION_STRUCT *dcc, uint8_t *buffer, uint8_t len);
 
 void dcc_check_for_new_messages(void);

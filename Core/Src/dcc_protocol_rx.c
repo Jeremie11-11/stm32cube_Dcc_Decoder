@@ -26,6 +26,46 @@ DCC_INSTRUCTION_STRUCT DccInst = {
 };
 
 
+void dcc_init(uint32_t backup_valid)
+{
+	uint32_t encoded_value;
+
+	dcc_physical_layer_init();
+
+	if(backup_valid == TRUE)
+	{
+		encoded_value = mem_read_backup_register(BACKUP_IDX__DCC_INFO_0);
+		DccInst.signal_state = (encoded_value >> 24) & 0x000000FF;
+		DccInst.dcc_target_speed = (encoded_value >> 16) & 0x000000FF;
+		DccInst.actual_speed = (encoded_value >> 8) & 0x000000FF;
+		DccInst.actual_dir = (encoded_value >> 0) & 0x000000FF;
+
+		encoded_value = mem_read_backup_register(BACKUP_IDX__DCC_INFO_1);
+		DccInst.functions = (encoded_value >> 24) & 0x000000FF;
+	}
+	else
+	{
+		DccInst.signal_state = signal_green;
+		DccInst.dcc_target_speed = 0;
+		DccInst.actual_speed = 0;
+		DccInst.actual_dir = DIR_DEFAULT_VALUE;
+		DccInst.functions = 0x80;
+	}
+}
+
+
+void dcc_backup_info(void)
+{
+	uint32_t encoded_value;
+
+	encoded_value = (DccInst.signal_state << 24) | (DccInst.dcc_target_speed << 16) | (DccInst.actual_speed << 8) | (DccInst.actual_dir);
+	mem_write_backup_register(BACKUP_IDX__DCC_INFO_0, encoded_value);
+
+	encoded_value = (DccInst.functions << 24);
+	mem_write_backup_register(BACKUP_IDX__DCC_INFO_1, encoded_value);
+}
+
+
 uint32_t decoded_address_match(DCC_MESSAGE_STRUCT *msg, uint8_t *buffer)
 {
 	if(buffer[0] < 0x80)

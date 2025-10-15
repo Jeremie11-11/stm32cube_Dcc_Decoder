@@ -10,9 +10,9 @@
 
 #include "main.h"
 
-// CPU_CLK = 80MHz
-#define PWM_MOTOR_20_KHZ 2000
-#define PWM_MOTOR_2_5_KHZ 16000
+// TIM1_CLK = 80MHz / 2 = 40MHz
+#define PWM_MOTOR_20_KHZ 1000
+#define PWM_MOTOR_2_5_KHZ 8000
 
 #define PWM_MOTOR_PERIOD_CNT PWM_MOTOR_2_5_KHZ
 #define PWM_MAX (PWM_MOTOR_PERIOD_CNT * 0.98)
