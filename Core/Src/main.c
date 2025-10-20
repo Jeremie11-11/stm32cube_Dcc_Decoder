@@ -134,10 +134,12 @@ int main(void)
   MX_RTC_Init();
   /* USER CODE BEGIN 2 */
 
+  // Get memory configuration
+  mem_init();
+
   // GPIO re-init for HW backward compatibility (see version.h)
   gpio_reinit_for_hw_compatibility();
 
-  mem_init();
 
   if(mem_is_backup_valid() == TRUE)
   {

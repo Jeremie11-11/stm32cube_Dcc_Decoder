@@ -60,7 +60,7 @@ struct MEM_CONFIG_STRUCT{
 
 	uint32_t motor_i;
 	uint32_t motor_d;
-	uint32_t pwm_front_light;
+	uint32_t debug_leds;
 	uint32_t pwm_cab_light;
 
 	uint32_t pwm_rear_light;

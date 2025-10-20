@@ -247,7 +247,7 @@ void tim_set_motor_pwm(dir_t direction, uint32_t pwm)
 	}
 }
 
-
+/*
 void tim_set_light(light_t light, uint8_t function)
 {
 	uint32_t state = function & light;
@@ -281,7 +281,7 @@ void tim_set_light(light_t light, uint8_t function)
 			TIM2->CCR4 = Mem.pwm_opt_light;
 	}
 }
-
+*/
 
 void tim_BusyWait_us(uint32_t us)
 {

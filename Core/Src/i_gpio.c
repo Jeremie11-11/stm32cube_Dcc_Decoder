@@ -6,6 +6,10 @@
  */
 
 #include "i_gpio.h"
+#include "m_memory.h"
+
+
+extern struct MEM_CONFIG_STRUCT Mem;
 
 
 static void gpio_init_HW_1v1(void);
@@ -14,6 +18,17 @@ static void gpio_init_HW_1v2(void);
 
 void gpio_reinit_for_hw_compatibility(void)
 {
+	GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+	if(Mem.debug_leds == FALSE)
+	{
+	  // Configure GPIO pins with reset value
+	  GPIO_InitStruct.Pin = GPIO_PIN_12 | GPIO_PIN_15;
+	  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+	  GPIO_InitStruct.Pull = GPIO_NOPULL;
+	  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+	}
+
 	gpio_init_HW_1v1();
 
 	gpio_init_HW_1v2();

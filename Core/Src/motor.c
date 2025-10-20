@@ -49,13 +49,11 @@ static void mot_current_source(uint32_t state)
 	if(state == ENABLE)
 	{
 		// Set PIN as push-pull to high state
-		//GPIO_CONFIG_OUTPUT(PIN_CURRENT_EN);
 		GPIO_WRITE(PIN_CURRENT_EN, TRUE);
 	}
 	else
 	{
 		// Set PIN as push-pull to low state
-		//GPIO_CONFIG_OUTPUT(PIN_CURRENT_EN);
 		GPIO_WRITE(PIN_CURRENT_EN, FALSE);
 	}
 }
@@ -83,6 +81,10 @@ void mot_speed_update(void)
 	}
 	else
 	*/
+
+	// --------------------------------------------------
+	// ----------------- Signal control -----------------
+	// --------------------------------------------------
 	if(DccInst.signal_state == signal_red)
 	{
 		// RED signal: Stopping
@@ -121,6 +123,9 @@ void mot_speed_update(void)
 		cnt_start(COUNTER_MOTOR_SPEED_UPDATE, 200);
 	}
 
+	// --------------------------------------------------
+	// --------------- Speed ramp control ---------------
+	// --------------------------------------------------
 	if((Mem.motor_ctrl.e == CTRL_OPEN_LOOP) || (Mem.motor_ctrl.e == CTRL_OPEN_LOOP_5_PERCENT_PWM))
 	{
 		// ----- Open loop speed control -----
@@ -164,8 +169,13 @@ void mot_speed_update(void)
 		}
 	}
 
+	// --------------------------------------------------
+	// ------------ State transition handling -----------
+	// --------------------------------------------------
 	if(DccInst.actual_speed == 0)
 	{
+		// ----- Stopping move or not moving -----
+
 		if(Motor.running != FALSE)
 		{
 			// PWM control is now disable
@@ -187,7 +197,8 @@ void mot_speed_update(void)
 	}
 	else if((old_speed == 0) || (Motor.use_backup_register == TRUE))
 	{
-		// ----- Preparing move -----
+		// ----- Preparing move transition -----
+		// From speed=0 to speed=+/-1
 
 		mot_current_source(ENABLE);
 
@@ -227,6 +238,11 @@ void mot_speed_update(void)
 
 		// PWM control is now enable
 		Motor.running = TRUE;
+	}
+	else
+	{
+		// ----- Motor is moving -----
+		// Nothing to be updated
 	}
 
 	Motor.use_backup_register = FALSE;
@@ -351,15 +367,23 @@ void mot_pwm_update(void)
 		else if(Motor.Uint_mV < 3000)
 			Motor.Uint_mV = 3000;
 
-		Motor.Unew_mV = Motor.Ustart;
+		// ----- Calculate the new voltage -----
+
+		// Boost voltage at start when using universal motor
+		if(Mem.motor_driver.e == DRIVER_UNIVERSAL_MOTOR)
+			Motor.Unew_mV = Motor.Ustart;
+		else
+			Motor.Unew_mV = 0;
+
 		Motor.Unew_mV += ((Motor.Uref_mV - Motor.Uemf_mV) * var_p) / 64;
 		Motor.Unew_mV += Motor.Uint_mV;
 		Motor.Unew_mV += Motor.Uder_mV;
 
-		//Motor.Unew_mV = (((Motor.Uref_mV - Motor.Uemf_mV) * var_p) / 64) + Motor.Uint_mV + Motor.Uder_mV + Motor.Ustart;
+		//
 		if(Motor.Unew_mV < (int32_t) (Mem.Umin_mV))
 			Motor.Unew_mV = (int32_t) (Mem.Umin_mV);
 
+		// Transform voltage into PWM
 		Motor.ccr = (Motor.Unew_mV * PWM_MOTOR_PERIOD_CNT) / Adc.Uin_mV;
 
 	}
@@ -371,31 +395,6 @@ void mot_pwm_update(void)
 		Motor.ccr = PWM_MIN;
 
 	tim_set_motor_pwm(DccInst.actual_dir, Motor.ccr);
-/*
-	if(Mem.motor_driver.e == DRIVER_UNIVERSAL_MOTOR)
-	{
-		// Both channel are updated, but only one is enabled.
-		TIM1->CCR1 = Motor.ccr;
-		TIM1->CCR2 = Motor.ccr;
-	}
-	else if(Mem.motor_driver.e == DRIVER_DC_MOTOR)
-	{
-		if(DccInst.actual_dir == DIR_FORWARDS)
-		{
-			TIM1->CCR1 = Motor.ccr;
-			TIM1->CCR2 = 0;
-		}
-		else if(DccInst.actual_dir == DIR_BACKWARDS)
-		{
-			TIM1->CCR1 = 0;
-			TIM1->CCR2 = Motor.ccr;
-		}
-		else
-		{
-			TIM1->CCR1 = 0;
-			TIM1->CCR2 = 0;
-		}
-	}*/
 
 	//
 	if(Motor.starting < 1000)
