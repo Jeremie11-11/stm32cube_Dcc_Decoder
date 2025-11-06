@@ -32,6 +32,7 @@ typedef enum{
 typedef struct{
 	uint8_t nb_data;
 	uint16_t addr;
+	uint8_t addr_extended;
 	uint8_t inst;
 	uint8_t speed;
 	uint8_t emergency;

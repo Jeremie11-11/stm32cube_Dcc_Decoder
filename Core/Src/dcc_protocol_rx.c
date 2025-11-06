@@ -68,15 +68,23 @@ void dcc_backup_info(void)
 
 uint32_t decoded_address_match(DCC_MESSAGE_STRUCT *msg, uint8_t *buffer)
 {
-	if(buffer[0] < 0x80)
+	if(buffer[0] < 128)
 	{
 		// 7 bit addresses
 		msg->addr = buffer[0];
+		msg->addr_extended = FALSE;
+	}
+	else if((buffer[0] >= 192) && (buffer[0] <= 231))
+	{
+		// 14 bit address (up to 0x27FF = 10239)
+		msg->addr = ((buffer[0] & 0x3F) << 8) + buffer[1];
+		msg->addr_extended = TRUE;
 	}
 	else
 	{
-		// 16 bit address
-		msg->addr = (buffer[1] << 8) + buffer[0];
+		// Address format not recognized
+		msg->addr_extended = TRUE;
+		return FALSE;
 	}
 
 	if((msg->addr == Mem.address) || (msg->addr == ADDR_BROADCAST))

@@ -69,7 +69,8 @@ typedef struct{
 } DCC_SIGNAL_STRUCT;
 
 typedef struct{
-	uint32_t val_buffer[30];
+	uint32_t time_buffer[32];
+	uint32_t val_buffer[32];
 	uint8_t buffer[64];
 	uint32_t idx;
 	uint32_t recieved_msg;
