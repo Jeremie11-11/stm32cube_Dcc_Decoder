@@ -9,6 +9,7 @@
 #define INC_DCC_PROTOCOL_RX_H_
 
 #include "main.h"
+#include <dcc_physical_layer.h>
 
 
 #define ADDR_BROADCAST 0x00
@@ -30,15 +31,10 @@ typedef enum{
 
 
 typedef struct{
-	uint8_t nb_data;
 	uint16_t addr;
-	uint8_t addr_extended;
+	uint8_t data[DCC_MAX_MESSAGE_LEN];
+	uint8_t nb_data;
 	uint8_t inst;
-	uint8_t speed;
-	uint8_t emergency;
-	uint8_t fct;
-	uint8_t mem_idx;
-	uint8_t mem_data;
 } DCC_MESSAGE_STRUCT;
 
 typedef struct{

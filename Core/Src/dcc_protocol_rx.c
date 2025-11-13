@@ -66,26 +66,42 @@ void dcc_backup_info(void)
 }
 
 
-uint32_t decoded_address_match(DCC_MESSAGE_STRUCT *msg, uint8_t *buffer)
+uint32_t decoded_address_match(DCC_MESSAGE_STRUCT *msg, uint8_t *buffer, uint8_t len)
 {
 	if(buffer[0] < 128)
 	{
-		// 7 bit addresses
+		// ---------- 7 bits address ----------
+		// 7 bit addresses (stored in the 1st byte)
 		msg->addr = buffer[0];
-		msg->addr_extended = FALSE;
+
+		// Number of available date in message (Remove address(1 byte) and CRC(1 byte))
+		msg->nb_data = len-2;
+
+		if(msg->nb_data > 0)
+			memcpy(msg->data, &buffer[1], msg->nb_data);
+		else
+			return FALSE;
 	}
 	else if((buffer[0] >= 192) && (buffer[0] <= 231))
 	{
+		// ---------- 14 bits address ----------
 		// 14 bit address (up to 0x27FF = 10239)
 		msg->addr = ((buffer[0] & 0x3F) << 8) + buffer[1];
-		msg->addr_extended = TRUE;
+
+		// Number of available date in message (Remove address(2 byte) and CRC(1 byte))
+		msg->nb_data = len-3;
+
+		if(msg->nb_data > 0)
+			memcpy(msg->data, &buffer[2], msg->nb_data);
+		else
+			return FALSE;
 	}
 	else
 	{
 		// Address format not recognized
-		msg->addr_extended = TRUE;
 		return FALSE;
 	}
+
 
 	if((msg->addr == Mem.address) || (msg->addr == ADDR_BROADCAST))
 		return TRUE;
@@ -112,59 +128,12 @@ uint32_t msg_with_new_content(uint8_t *buffer, uint8_t len)
 	return FALSE;
 }
 
-void decoding_msg_content(DCC_MESSAGE_STRUCT *msg, uint8_t *buffer, uint8_t len)
-{
-	uint8_t inst_speed=0;
-
-	if(msg->addr < 0x80)
-	{
-		// With 1 byte address
-		msg->nb_data = len - 2; //len - 1 - 1
-
-		msg->inst = buffer[1] >> 5;
-
-		inst_speed = ((buffer[1] & 0x0F) << 1) + ((buffer[1] & 0x10) >> 4);
-		msg->fct = buffer[2];
-
-		msg->mem_idx = buffer[2];
-		msg->mem_data = buffer[3];
-	}
-	else
-	{
-		// With 2 bytes address
-		msg->nb_data = len - 3; //len - 2 - 1
-
-		msg->inst = buffer[2] >> 5;
-
-		inst_speed = ((buffer[2] & 0x0F) << 1) + ((buffer[2] & 0x10) >> 4);
-		msg->fct = buffer[3];
-
-		msg->mem_idx = buffer[3];
-		msg->mem_data = buffer[4];
-	}
-
-	if(inst_speed <= 1)
-	{
-		msg->emergency = 0;
-		msg->speed = 0;
-	}
-	else if(inst_speed <= 3)
-	{
-		msg->emergency = 1;
-		msg->speed = 0;
-	}
-	else
-	{
-		msg->emergency = 0;
-		msg->speed = inst_speed - 3;
-	}
-}
-
-
-
-
+// 1. Check for a new message in the buffer
+// 2. Check the message recipient (address)
+// 3. Check for new contents
+// 4. Decode the protocol
+// Called in main loop
 void dcc_check_for_new_messages(void)
-//void dcc_msg_decoder(void)
 {
 	DCC_MESSAGE_STRUCT msg;
 	uint8_t *buffer, len;
@@ -183,7 +152,7 @@ void dcc_check_for_new_messages(void)
 	len = DccRx.msg[DccRx.msg_out_i].len;
 
 	// Ensure that the address match
-	if(decoded_address_match(&msg, buffer) == FALSE)
+	if(decoded_address_match(&msg, buffer, len) == FALSE)
 	{
 		// Address is not matching
 		DccRx.msg_out_i = (DccRx.msg_out_i + 1) & (DCC_MAX_MESSAGES_QUEUE-1);
@@ -202,19 +171,62 @@ void dcc_check_for_new_messages(void)
 		return;
 	}
 
-	// ----- Received message with new contents -----
+	// ----------------------------------------------------------------------
+	// --------------------- Message with new contents ----------------------
+	// ----------------------------------------------------------------------
+	// Message with right format, correct CRC and address match
 
-	decoding_msg_content(&msg, buffer, len);
+	// Get message instruction
+	msg.inst = msg.data[0] >> 5;
 
-	if(msg.inst == speed_dir_inst_forward)
+	// Decoding ...
+
+	if(msg.inst == config_variable_inst)
 	{
-		if(msg.nb_data >= 1) {
-			DccInst.dcc_target_speed = msg.speed;
-			DccInst.emergency_stop = msg.emergency;
+		// ---------- MSG_DCC_MEMORY ----------
+		if(msg.nb_data == 6)
+		{
+			uint8_t mem_idx = msg.data[1] * 4;
+
+			if(mem_idx < sizeof(Mem))
+			{
+				// Store the value into the RAM memory
+				memcpy(((uint8_t *)&Mem) + mem_idx, &msg.data[2], 4);
+
+				// Store RAM configuration into flash memory
+				mem_write_config();
+				mem_read_config();
+
+				// LED blink one time in red
+				debug_set_led_status_red(LED_MEM_WRITE, 50);
+			}
+		}
+	}
+	else if(msg.inst == function_group_one_inst)
+	{
+		// ---------- MSG_DCC_FUNCTION ----------
+
+	}
+	else if(msg.inst == speed_dir_inst_forward)
+	{
+		// ---------- MSG_DCC_SPEED (FORWARDS) ----------
+		if(msg.nb_data >= 1)
+		{
+			int32_t speed = ((msg.data[0] & 0x0F) << 1) + ((msg.data[0] & 0x10) >> 4) - 3;
+
+			if((speed == -1) || (speed == 0))
+				DccInst.emergency_stop = TRUE;
+			else
+				DccInst.emergency_stop = FALSE;
+
+			if(speed < 0)
+				speed = 0;
+
+			DccInst.dcc_target_speed = speed;
 		}
 
 		if(msg.nb_data >= 2)
-			DccInst.functions = msg.fct;
+			DccInst.functions = msg.data[1];
 
 		// Update direction if not initialized (for reboot in run)
 		if((DccInst.actual_dir != DIR_FORWARDS) && (DccInst.actual_dir != DIR_BACKWARDS))
@@ -228,45 +240,38 @@ void dcc_check_for_new_messages(void)
 	}
 	else if(msg.inst == speed_dir_inst_reverse)
 	{
-		if(msg.nb_data >= 1) {
-			DccInst.dcc_target_speed = -msg.speed;
-			DccInst.emergency_stop = msg.emergency;
+		// ---------- MSG_DCC_SPEED (BACKWARDS) ----------
+		if(msg.nb_data >= 1)
+		{
+			int32_t speed = ((msg.data[0] & 0x0F) << 1) + ((msg.data[0] & 0x10) >> 4) - 3;
+
+			if((speed == -1) || (speed == 0))
+				DccInst.emergency_stop = TRUE;
+			else
+				DccInst.emergency_stop = FALSE;
+
+			if(speed < 0)
+				speed = 0;
+
+			DccInst.dcc_target_speed = -speed;
 		}
 
 		if(msg.nb_data >= 2)
-			DccInst.functions = msg.fct;
+			DccInst.functions = msg.data[1];
 
 		// Update direction if not initialized (for reboot in run)
 		if((DccInst.actual_dir != DIR_FORWARDS) && (DccInst.actual_dir != DIR_BACKWARDS))
 			DccInst.actual_dir = DIR_BACKWARDS;
 
-		// Update direction if motor is stopped (for lightning direction)
+		// Update direction if motor is stopped
 		if((DccInst.dcc_target_speed == 0) && (DccInst.actual_speed == 0))
 			DccInst.actual_dir = DIR_BACKWARDS;
 
 		dcc_update_functions();
 	}
-	else if(msg.inst == config_variable_inst)
-	{
-		if(msg.nb_data == 6)
-		{
-			// ----- Store configuration into flash memory -----
-			uint8_t mem_idx = buffer[2] * 4;
 
-			if(mem_idx < sizeof(Mem))
-			{
-				memcpy(((uint8_t *)&Mem) + mem_idx, &buffer[3], 4);
-
-				mem_write_config();
-				mem_read_config();
-
-				debug_set_led_status_red(LED_MEM_WRITE, 50);
-			}
-		}
-	}
-
+	// Next message
 	DccRx.msg_out_i = (DccRx.msg_out_i + 1) & (DCC_MAX_MESSAGES_QUEUE-1);
-
 }
 
 void dcc_update_functions(void)
