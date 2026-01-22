@@ -57,18 +57,6 @@ typedef struct{
 } DCC_PROTOCOL_STRUCT;
 
 typedef struct{
-	uint16_t green_cnt;
-	uint16_t yellow_cnt;
-	uint16_t red_cnt;
-	//signal_state_t signal_state;
-	uint16_t timeout_tab[8];
-	uint32_t in_idx;
-	uint32_t out_idx;
-	//uint16_t val[300];
-	//uint32_t val_index;
-} DCC_SIGNAL_STRUCT;
-
-typedef struct{
 	uint32_t time_buffer[32];
 	uint32_t val_buffer[32];
 	uint8_t buffer[64];
@@ -86,8 +74,6 @@ typedef struct{
 } DCC_DEBUG2_STRUCT;
 
 void dcc_physical_layer_init(void);
-
-void dcc_tx_update(void);
 
 void dcc_dma_update(uint32_t buffer_full);
 

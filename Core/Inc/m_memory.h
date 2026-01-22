@@ -61,10 +61,8 @@ struct MEM_CONFIG_STRUCT{
 	uint32_t motor_i;
 	uint32_t motor_d;
 	uint32_t debug_leds;
-	uint32_t pwm_cab_light;
+	uint32_t time_after_stop;
 
-	uint32_t pwm_rear_light;
-	uint32_t pwm_opt_light;
 	//uint32_t pad; // Ensure that MEM_STRUCT is a multiple of 8
 } __attribute__ ((packed));
 

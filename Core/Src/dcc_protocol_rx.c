@@ -22,7 +22,7 @@ DCC_INSTRUCTION_STRUCT DccInst = {
 		.dcc_target_speed = 0,
 		.target_speed = 0,
 		.actual_speed = 0,
-		.signal_state = signal_green
+		.signal_state = SIGNAL_FREE
 };
 
 
@@ -45,7 +45,7 @@ void dcc_init(uint32_t backup_valid)
 	}
 	else
 	{
-		DccInst.signal_state = signal_green;
+		DccInst.signal_state = SIGNAL_FREE;
 		DccInst.dcc_target_speed = 0;
 		DccInst.actual_speed = 0;
 		DccInst.actual_dir = DIR_DEFAULT_VALUE;
@@ -145,7 +145,7 @@ void dcc_check_for_new_messages(void)
 	// ----- New message received -----
 
 	// Led green blinking(5Hz) when communication is working
-	if((DccDebug.recieved_msg%40) == 0)
+	if((DccDebug.recieved_msg%20) == 0)
 		debug_toggle_led_status_green(LED_DCC_COM, 2000);
 
 	buffer = DccRx.msg[DccRx.msg_out_i].data;

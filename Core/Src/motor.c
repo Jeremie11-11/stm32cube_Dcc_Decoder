@@ -11,6 +11,8 @@
 #include <m_memory.h>
 #include "motor.h"
 #include <stdlib.h>
+#include <dcc_signal.h>
+
 
 extern ADC_HandleTypeDef hadc1;
 extern TIM_HandleTypeDef htim1;
@@ -58,6 +60,7 @@ static void mot_current_source(uint32_t state)
 	}
 }
 
+
 // Updated in the main loop.
 void mot_speed_update(void)
 {
@@ -83,45 +86,26 @@ void mot_speed_update(void)
 	*/
 
 	// --------------------------------------------------
-	// ----------------- Signal control -----------------
+	// -------- Light signal for speed limitation -------
 	// --------------------------------------------------
-	if(DccInst.signal_state == signal_red)
-	{
-		// RED signal: Stopping
-		DccInst.target_speed = 0;
 
-		// Reload the counter
-		cnt_start(COUNTER_MOTOR_SPEED_UPDATE, 100);
-	}
-	else if(DccInst.signal_state == signal_yellow)
-	{
-		// YELLOW signal: Speed limitation
-		if(DccInst.dcc_target_speed >= 0)
-		{
-			if(DccInst.dcc_target_speed > 5)
-				DccInst.target_speed = 5;
-			else
-				DccInst.target_speed = DccInst.dcc_target_speed;
-		}
-		else
-		{
-			if(DccInst.dcc_target_speed < -5)
-				DccInst.target_speed = -5;
-			else
-				DccInst.target_speed = DccInst.dcc_target_speed;
-		}
+	signal_speed_limit_update();
 
-		// Reload the counter
+	if( (DccInst.signal_state == SIGNAL_STOP) ||
+			(DccInst.signal_state == SIGNAL_40KMH) ||
+			(DccInst.signal_state == SIGNAL_60KMH) )
+	{
 		cnt_start(COUNTER_MOTOR_SPEED_UPDATE, 100);
 	}
 	else
-	{
-		// GREEN signal: Do not limit the speed
-		DccInst.target_speed = DccInst.dcc_target_speed;
-
-		// Reload the counter
 		cnt_start(COUNTER_MOTOR_SPEED_UPDATE, 200);
-	}
+
+	if(DccInst.dcc_target_speed > DccInst.speed_limit)
+		DccInst.target_speed = DccInst.speed_limit;
+	else if(DccInst.dcc_target_speed < -DccInst.speed_limit)
+		DccInst.target_speed = -DccInst.speed_limit;
+	else
+		DccInst.target_speed = DccInst.dcc_target_speed;
 
 	// --------------------------------------------------
 	// --------------- Speed ramp control ---------------

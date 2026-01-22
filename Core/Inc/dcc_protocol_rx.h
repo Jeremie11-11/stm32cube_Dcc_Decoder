@@ -39,9 +39,10 @@ typedef struct{
 
 typedef struct{
 	signal_state_t signal_state;
-	int8_t dcc_target_speed;	// Target speed received from DCC
-	int8_t target_speed;			// Target speed based on DCC target speed and signal state
-	int8_t actual_speed;			// Speed reference for motor control with ramp
+	int16_t dcc_target_speed;	// Target speed received from DCC
+	int16_t speed_limit;			// Speed limitation from light signal
+	int16_t target_speed;			// Target speed based on DCC target speed and limited through speed limitation
+	int16_t actual_speed;			// Speed reference for motor control (Target speed with acc./dec. ramp)
 	dir_t actual_dir;					// Used for the lights (following moving directions)
 	uint8_t functions;				// Byte where the function are stored(F
 	uint8_t emergency_stop;

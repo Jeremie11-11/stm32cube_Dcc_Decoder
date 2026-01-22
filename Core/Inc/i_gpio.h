@@ -41,6 +41,8 @@ typedef enum{
 
 #define TEST_PIN1 {GPIOB, GPIO_PIN_10}
 #define TEST_PIN2 {GPIOB, GPIO_PIN_1}
+#define TEST_PIN3 {GPIOB, GPIO_PIN_0}
+#define TEST_PIN4 {GPIOA, GPIO_PIN_7}
 
 #define FRONT_LIGHT {GPIOC, GPIO_PIN_14}
 #define CAB_LIGHT {GPIOC, GPIO_PIN_15}

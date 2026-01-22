@@ -22,11 +22,15 @@ typedef enum{
 
 
 typedef enum{
-	signal_green = 0,
-	signal_yellow = 1,
-	signal_red = 2
-}signal_state_t;
+	SIGNAL_INVALID 	= 0,
+	SIGNAL_STOP 		= 1,
+	SIGNAL_40KMH 		= 2,
+	SIGNAL_60KMH 		= 3,
+	SIGNAL_90KMH 		= 4,
+	SIGNAL_NOCHANGE	= 5,
+	SIGNAL_FREE 		= 6
 
+}signal_state_t;
 
 typedef enum{
 	DIR_FORWARDS = 0,

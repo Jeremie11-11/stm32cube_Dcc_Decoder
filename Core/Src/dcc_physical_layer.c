@@ -8,19 +8,18 @@
 #include <dcc_physical_layer.h>
 #include <i_dma.h>
 #include <dcc_protocol_rx.h>
+#include <dcc_signal.h>
 
 
-DCC_PROTOCOL_STRUCT DccTx;
 DCC_PROTOCOL_STRUCT DccRx;
-DCC_SIGNAL_STRUCT DccSignal;
-
-extern DMA_STRUCT Dma;
 DCC_PHYSICAL_LAYER_STRUCT Dma_Struct;
-extern DCC_INSTRUCTION_STRUCT DccInst;
-
 
 DCC_DEBUG_STRUCT DccDebug;
 DCC_DEBUG2_STRUCT DccDebug2;
+
+extern DMA_STRUCT Dma;
+extern DCC_INSTRUCTION_STRUCT DccInst;
+extern DCC_SIGNAL_STRUCT DccSignal;
 
 
 void dcc_physical_layer_init(void)
@@ -28,26 +27,6 @@ void dcc_physical_layer_init(void)
 	DccDebug.recieved_msg = 0;
 	DccSignal.in_idx = 0;
 	DccSignal.out_idx = 0;
-}
-
-
-inline static void dcc_tx_set_zero(void)
-{
-	TIM1->ARR = 888;
-	TIM1->CCR1 = 444;
-}
-
-
-inline static void dcc_tx_set_one(void)
-{
-	TIM1->ARR = 514;
-	TIM1->CCR1 = 257;
-}
-
-
-void dcc_tx_update(void)
-{
-
 }
 
 
@@ -125,12 +104,11 @@ void dcc_rx_update(void)
 			{
 				// Bit with unknown state received
 				DccRx.preamble_i = DCC_RX_PREAMBLE_INIT;
-
-				// Store timeout if bigger than previous
-				if(Dma_Struct.time_buffer[Dma_Struct.idx_out0] > DccRx.timeout)
-					DccRx.timeout = Dma_Struct.time_buffer[Dma_Struct.idx_out0];
 			}
 
+			// Store timeout if bigger than previous
+			if(Dma_Struct.time_buffer[Dma_Struct.idx_out0] > DccRx.timeout)
+				DccRx.timeout = Dma_Struct.time_buffer[Dma_Struct.idx_out0];
 		}
 		else if(DccRx.preamble_i > 0)
 		{
@@ -151,10 +129,10 @@ void dcc_rx_update(void)
 				DccDebug.buffer[0] = val;
 				DccDebug.idx = 1;
 
-				DccSignal.timeout_tab[DccSignal.in_idx++] = DccRx.timeout;
+				DccSignal.timeout_tab[DccSignal.in_idx++] = (DccRx.timeout*10);
 				DccSignal.in_idx &= 0x07;
 
-				DccRx.timeout = 10000;
+				DccRx.timeout = 1000;
 
 			}
 			else if((val >= DCC_RX_ONE_LOW) && (val <= DCC_RX_ZERO_HIGH) && (val1 >= DCC_RX_ONE_LOW) && (val1 <= DCC_RX_ONE_HIGH))
@@ -262,87 +240,4 @@ void dcc_rx_update(void)
 	}
 }
 
-void signal_update()
-{
 
-	while(DccSignal.out_idx != DccSignal.in_idx)
-	{
-		uint32_t timeout = DccSignal.timeout_tab[DccSignal.out_idx];
-
-		// Less than 200uS
-		if(timeout < 30)
-		{
-			if(DccSignal.green_cnt < 10)
-				DccSignal.green_cnt++;
-			if(DccSignal.yellow_cnt > 0)
-				DccSignal.yellow_cnt--;
-			if(DccSignal.red_cnt > 0)
-				DccSignal.red_cnt--;
-		}
-		// Between 200uS and 600uS
-		else if(timeout < 100)
-		{
-			if(DccSignal.yellow_cnt < 10)
-				DccSignal.yellow_cnt++;
-			if(DccSignal.green_cnt > 0)
-				DccSignal.green_cnt--;
-			if(DccSignal.red_cnt > 0)
-				DccSignal.red_cnt--;
-		}
-		// Between 600uS and 1000uS
-		else if(timeout < 200)
-		{
-			if(DccSignal.red_cnt < 10)
-				DccSignal.red_cnt++;
-			if(DccSignal.green_cnt > 0)
-				DccSignal.green_cnt--;
-			if(DccSignal.yellow_cnt > 0)
-				DccSignal.yellow_cnt--;
-		}
-		else
-		{
-
-		}
-
-		if(DccInst.signal_state == signal_green)
-		{
-			// ----- Signal is green -----
-
-			// Check for signal state change
-			if(DccSignal.yellow_cnt > (DccSignal.green_cnt+2))
-				DccInst.signal_state = signal_yellow;
-			else if(DccSignal.red_cnt > (DccSignal.green_cnt+2))
-				DccInst.signal_state = signal_red;
-		}
-		else if(DccInst.signal_state == signal_yellow)
-		{
-			// ----- Signal is yellow -----
-
-			// Check for signal state change
-			if(DccSignal.green_cnt > (DccSignal.yellow_cnt+2))
-				DccInst.signal_state = signal_green;
-			else if(DccSignal.red_cnt > (DccSignal.yellow_cnt+2))
-				DccInst.signal_state = signal_red;
-		}
-		else
-		{
-			// ----- Signal is red -----
-
-			// Check for signal state change
-			if(DccSignal.yellow_cnt > (DccSignal.red_cnt+2))
-				DccInst.signal_state = signal_yellow;
-			else if(DccSignal.green_cnt > (DccSignal.red_cnt+2))
-				DccInst.signal_state = signal_green;
-		}
-
-		// Update signal
-		/*
-		if(DccInst.signal_state != DccSignal.signal_state)
-			DccInst.signal_state = DccSignal.signal_state;
-*/
-
-		DccSignal.out_idx++;
-		DccSignal.out_idx &= 0x07;
-	}
-
-}
