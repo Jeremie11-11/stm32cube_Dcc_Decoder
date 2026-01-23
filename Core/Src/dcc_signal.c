@@ -21,10 +21,10 @@ extern struct MEM_CONFIG_STRUCT Mem;
 static const int16_t signal_speed_limit[] =
 {
 	[SIGNAL_STOP] = 0,
-	[SIGNAL_40KMH] = 5,
-	[SIGNAL_60KMH] = 8,
-	[SIGNAL_90KMH] = 12,
-	[SIGNAL_FREE] = 28
+	[SIGNAL_40KMH] = 40,
+	[SIGNAL_60KMH] = 60,
+	[SIGNAL_90KMH] = 90,
+	[SIGNAL_FREE] = 320
 };
 
 

@@ -222,7 +222,7 @@ void dcc_check_for_new_messages(void)
 			if(speed < 0)
 				speed = 0;
 
-			DccInst.dcc_target_speed = speed;
+			DccInst.dcc_target_speed = (speed * 10);
 		}
 
 		if(msg.nb_data >= 2)
@@ -253,7 +253,7 @@ void dcc_check_for_new_messages(void)
 			if(speed < 0)
 				speed = 0;
 
-			DccInst.dcc_target_speed = -speed;
+			DccInst.dcc_target_speed = -(speed * 10);
 		}
 
 		if(msg.nb_data >= 2)

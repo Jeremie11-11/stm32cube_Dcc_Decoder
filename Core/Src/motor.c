@@ -91,14 +91,10 @@ void mot_speed_update(void)
 
 	signal_speed_limit_update();
 
-	if( (DccInst.signal_state == SIGNAL_STOP) ||
-			(DccInst.signal_state == SIGNAL_40KMH) ||
-			(DccInst.signal_state == SIGNAL_60KMH) )
-	{
-		cnt_start(COUNTER_MOTOR_SPEED_UPDATE, 100);
-	}
+	if(DccInst.signal_state == SIGNAL_STOP)
+		cnt_start(COUNTER_MOTOR_SPEED_UPDATE, 10);
 	else
-		cnt_start(COUNTER_MOTOR_SPEED_UPDATE, 200);
+		cnt_start(COUNTER_MOTOR_SPEED_UPDATE, 20);
 
 	if(DccInst.dcc_target_speed > DccInst.speed_limit)
 		DccInst.target_speed = DccInst.speed_limit;
@@ -106,6 +102,7 @@ void mot_speed_update(void)
 		DccInst.target_speed = -DccInst.speed_limit;
 	else
 		DccInst.target_speed = DccInst.dcc_target_speed;
+
 
 	// --------------------------------------------------
 	// --------------- Speed ramp control ---------------
@@ -124,8 +121,46 @@ void mot_speed_update(void)
 	else
 	{
 		// ----- Close loop speed control -----
+
+		// Ensure target is bigger than speed_min
+		int16_t speed_min;
+		if(Motor.starting < 80)
+			speed_min = (int16_t)Mem.speed_min_start;
+		else
+			speed_min = (int16_t)Mem.speed_min;
+
+		if((DccInst.target_speed > 0) && (DccInst.target_speed < speed_min))
+			DccInst.target_speed = speed_min;
+		else if((DccInst.target_speed < 0) && (DccInst.target_speed > -speed_min))
+			DccInst.target_speed = -speed_min;
+
 		if(Motor.use_backup_register == FALSE)
 		{
+			if(DccInst.target_speed > DccInst.actual_speed)
+			{
+				if(DccInst.actual_speed == 0)
+					// Acceleration (First step)
+					DccInst.actual_speed = speed_min;
+				else if(DccInst.actual_speed == -speed_min)
+					// Deceleration (Last step)
+					DccInst.actual_speed = 0;
+				else
+					// Adapt speed
+					DccInst.actual_speed++;
+			}
+			else if(DccInst.target_speed < DccInst.actual_speed)
+			{
+				if(DccInst.actual_speed == 0)
+					// Acceleration (First step)
+					DccInst.actual_speed = -speed_min;
+				else if(DccInst.actual_speed == speed_min)
+					// Deceleration (Last step)
+					DccInst.actual_speed = 0;
+				else
+					// Adapt speed
+					DccInst.actual_speed--;
+			}
+			/*
 			if(DccInst.target_speed > DccInst.actual_speed)
 			{
 				if((DccInst.actual_speed == 1) && ((Motor.Uemf_avg_mV > (Mem.Uref_min_start_mV-50)) || (Motor.starting >= 80)))
@@ -150,6 +185,7 @@ void mot_speed_update(void)
 					// Adapt speed
 					DccInst.actual_speed--;
 			}
+			*/
 		}
 	}
 
@@ -177,6 +213,8 @@ void mot_speed_update(void)
 			memMotData.Unew_mV[Motor.i] = -1;
 
 			mem_write_motor();
+
+			cnt_start(COUNTER_MOTOR_SPEED_UPDATE, 2000);
 		}
 	}
 	else if((old_speed == 0) || (Motor.use_backup_register == TRUE))
@@ -236,8 +274,8 @@ void mot_speed_update(void)
 
 void mot_pwm_update(void)
 {
-	int32_t Motor_Uemf2_mV=0;
-	static int32_t var_p, var_i, var_p2, var_d;
+	//int32_t Motor_Uemf2_mV=0;
+	static int32_t var_p, var_i;//, var_d;
 
 	// Ensure motor is running
 	if(Motor.running != TRUE)
@@ -260,7 +298,7 @@ void mot_pwm_update(void)
 			Motor.i = 0;
 
 		// 5 percent PWM control (5% per speed)
-		Motor.ccr = (PWM_MOTOR_PERIOD_CNT * (uint32_t)(abs(DccInst.actual_speed))) / 20 ;
+		Motor.ccr = (PWM_MOTOR_PERIOD_CNT * (uint32_t)(abs(DccInst.actual_speed))) / 200 ;
 		Motor.Unew_mV = ((int32_t)Adc.Uin_mV * (int32_t)Motor.ccr) / PWM_MOTOR_PERIOD_CNT;
 	}
 	else if(Mem.motor_ctrl.e == CTRL_OPEN_LOOP)
@@ -271,7 +309,8 @@ void mot_pwm_update(void)
 			Motor.i = 0;
 
 		// Set PWM on voltage reference (Following voltage table)
-		Motor.Unew_mV = (int32_t)(Motor.Uref_op[abs(DccInst.actual_speed)]);
+		//Motor.Unew_mV = (int32_t)(Motor.Uref_op[abs(DccInst.actual_speed)]);
+		Motor.Unew_mV = (int32_t)(4000 + abs(DccInst.actual_speed) * 50);
 		Motor.ccr = (((uint32_t)(Motor.Unew_mV)) * PWM_MOTOR_PERIOD_CNT) / Adc.Uin_mV;
 	}
 	else
@@ -288,23 +327,22 @@ void mot_pwm_update(void)
 
 			var_p = Mem.motor_p;
 			var_i = Mem.motor_i;
-			var_d = Mem.motor_d;
-			var_p2 = 1U;
+			//var_d = Mem.motor_d;
 		}
-
-		Motor_Uemf2_mV = (Motor.Uemf_old_mV + Motor.Uemf_mV)/2;
 
 		Motor.Uemf_avg_mV = (Motor.Uemf_avg_mV*7 + Motor.Uemf_mV)/8;
 
 		// REF
-		Motor.Uref_mV = Motor.Uref_cl[abs(DccInst.actual_speed)];
-		if((Motor.starting < 80) && (Motor.Uref_mV < Mem.Uref_min_start_mV))
-			Motor.Uref_mV = Mem.Uref_min_start_mV;
+		//Motor.Uref_mV = (uint16_t)((((uint32_t)abs(DccInst.actual_speed)) * 300) / 1);
+		Motor.Uref_mV = (uint16_t)((((uint32_t)abs(DccInst.actual_speed)) * Mem.ratio_speed_Uref) / 10);
+		//Motor.Uref_mV = Motor.Uref_cl[abs(DccInst.actual_speed)];
+		//if((Motor.starting < 80) && (Motor.Uref_mV < Mem.Uref_min_start_mV))
+			//Motor.Uref_mV = Mem.Uref_min_start_mV;
 
-		if(Motor.Uref_mV < Mem.Uref_min_mV)
-			Motor.Uref_mV = Mem.Uref_min_mV;
+		//if(Motor.Uref_mV < Mem.Uref_min_mV)
+			//Motor.Uref_mV = Mem.Uref_min_mV;
 
-
+/*
 		if((abs(DccInst.actual_speed) == 1) && (Motor.starting >= 40))
 		{
 			if(Motor.Uemf_mV < (Mem.Uref_min_start_mV-50))
@@ -327,24 +365,25 @@ void mot_pwm_update(void)
 
 			Motor.Uder_mV = ((Motor.Uemf_old_mV - Motor.Uemf_mV) * var_d) / 64;
 		}
-		else if(Motor.starting == 0)
+		else */
+		if(Motor.starting == 0)
 		{
 			Motor.Ustart = 8000;
-			Motor.Uder_mV = 0;
+			//Motor.Uder_mV = 0;
 		}
 		else
 		{
 			Motor.Ustart = 0;
 
-			Motor.Uder_mV = 0;
+			//Motor.Uder_mV = 0;
 		}
-
+/*
 		if(Motor.Uder_mV > 0)
 			Motor.Uder_mV = 0;
 		else if(Motor.Uder_mV < -5000)
 			Motor.Uder_mV = -5000;
 		Motor.Uemf_old_mV = Motor.Uemf_mV;
-
+*/
 		Motor.Uint_mV += ((Motor.Uref_mV - Motor.Uemf_mV) * var_i) / 64;
 		if(Motor.Uint_mV > 20000)
 			Motor.Uint_mV = 20000;

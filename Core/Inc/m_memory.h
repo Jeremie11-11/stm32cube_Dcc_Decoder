@@ -63,7 +63,10 @@ struct MEM_CONFIG_STRUCT{
 	uint32_t debug_leds;
 	uint32_t time_after_stop;
 
-	//uint32_t pad; // Ensure that MEM_STRUCT is a multiple of 8
+	uint32_t ratio_speed_Uref;
+	uint32_t speed_min_start;
+	uint32_t speed_min;
+	uint32_t pad; // Ensure that MEM_STRUCT is a multiple of 8
 } __attribute__ ((packed));
 
 
