@@ -46,20 +46,6 @@ void mot_init(uint32_t backup_valid)
 	}
 }
 
-static void mot_current_source(uint32_t state)
-{
-	if(state == ENABLE)
-	{
-		// Set PIN as push-pull to high state
-		GPIO_WRITE(PIN_CURRENT_EN, TRUE);
-	}
-	else
-	{
-		// Set PIN as push-pull to low state
-		GPIO_WRITE(PIN_CURRENT_EN, FALSE);
-	}
-}
-
 
 // Updated in the main loop.
 void mot_speed_update(void)
@@ -204,7 +190,7 @@ void mot_speed_update(void)
 			// Disable H-bridge
 			tim_set_motor_bridge(DIR_STOPPED);
 
-			mot_current_source(DISABLE);
+			//mot_current_source(DISABLE);
 
 			// Store start of the movement
 			memMotData.Uin_mV[Motor.i]  = -1;
@@ -334,7 +320,11 @@ void mot_pwm_update(void)
 
 		// REF
 		//Motor.Uref_mV = (uint16_t)((((uint32_t)abs(DccInst.actual_speed)) * 300) / 1);
-		Motor.Uref_mV = (uint16_t)((((uint32_t)abs(DccInst.actual_speed)) * Mem.ratio_speed_Uref) / 10);
+		if(DccInst.actual_dir == DIR_FORWARDS)
+			Motor.Uref_mV = (uint16_t)((((uint32_t)abs(DccInst.actual_speed)) * Mem.ratio_spd_fwd_Uref) / 10);
+		else
+			Motor.Uref_mV = (uint16_t)((((uint32_t)abs(DccInst.actual_speed)) * Mem.ratio_spd_bwd_Uref) / 10);
+
 		//Motor.Uref_mV = Motor.Uref_cl[abs(DccInst.actual_speed)];
 		//if((Motor.starting < 80) && (Motor.Uref_mV < Mem.Uref_min_start_mV))
 			//Motor.Uref_mV = Mem.Uref_min_start_mV;

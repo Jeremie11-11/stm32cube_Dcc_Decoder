@@ -10,6 +10,7 @@
 #include <i_adc.h>
 #include <i_timer.h>
 #include <m_memory.h>
+//#include "motor.h"
 
 
 extern DCC_PROTOCOL_STRUCT DccRx;
@@ -276,19 +277,25 @@ void dcc_check_for_new_messages(void)
 
 void dcc_update_functions(void)
 {
+	mot_current_source(ENABLE);
+
 	if(DccInst.actual_dir == DIR_FORWARDS)
 	{
 		GPIO_WRITE(FRONT_LIGHT, (DccInst.functions >> 0) & 0x01);
-		GPIO_WRITE(REAR_LIGHT, (DccInst.functions >> 2) & 0x01);
+		GPIO_WRITE(FRONT_LIGHT2, (DccInst.functions >> 1) & 0x01);
+		GPIO_WRITE(REAR_LIGHT, FALSE);
+		GPIO_WRITE(REAR_LIGHT2, (DccInst.functions >> 2) & 0x01);
 	}
 	else
 	{
-		GPIO_WRITE(FRONT_LIGHT, (DccInst.functions >> 2) & 0x01);
 		GPIO_WRITE(REAR_LIGHT, (DccInst.functions >> 0) & 0x01);
+		GPIO_WRITE(REAR_LIGHT2, (DccInst.functions >> 1) & 0x01);
+		GPIO_WRITE(FRONT_LIGHT, FALSE);
+		GPIO_WRITE(FRONT_LIGHT2, (DccInst.functions >> 2) & 0x01);
 	}
 
-	GPIO_WRITE(CAB_LIGHT, (DccInst.functions >> 1) & 0x01);
-	GPIO_WRITE(OPT_LIGHT, (DccInst.functions >> 3) & 0x01);
+	GPIO_WRITE(CAB_LIGHT, (DccInst.functions >> 3) & 0x01);
+	//GPIO_WRITE(OPT_LIGHT, (DccInst.functions >> 4) & 0x01);
 
 	//tim_set_light(opt_light, DccInst.functions);
 

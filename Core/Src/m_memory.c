@@ -8,7 +8,7 @@
 #include <dcc_protocol_rx.h>
 #include <m_memory.h>
 #include <string.h>
-
+//#include "define.h"
 
 extern RTC_HandleTypeDef hrtc;
 
@@ -38,7 +38,7 @@ void mem_init(void)
 		// ---------- Invalid address ----------
 		// Write default values
 
-		Mem.address = 100;
+		//Mem.address = 100;
 /*
 		Mem.event_ctrl.bit.led_boot_event = _ENABLE;
 		Mem.event_ctrl.bit.led_dcc_com = _ENABLE;
@@ -47,14 +47,38 @@ void mem_init(void)
 		Mem.event_ctrl.bit.motor_ctrl = CTRL_CLOSE_LOOP;
 		Mem.event_ctrl.bit.sleep_enable = _ENABLE;
 */
-		Mem.Ustart_fwd_mV = 6000;
-		Mem.Ustart_bwd_mV = 6000;
-		Mem.Umin_mV = 3000;
+		//Mem.Ustart_fwd_mV = 6000;
+		//Mem.Ustart_bwd_mV = 6000;
+		//Mem.Umin_mV = 3000;
 
+		//Mem.motor_p = 8;
+		//Mem.motor_i = 2;
+		//Mem.motor_d = 0;
+
+		Mem.address = 100;
+		Mem.motor_driver.e = DRIVER_UNIVERSAL_MOTOR;
+		Mem.motor_ctrl.e = CTRL_CLOSE_LOOP;
+		Mem.Rcoil_fwd_mOhm = 18000;
+
+		Mem.Rcoil_bwd_mOhm = 18000;
+		Mem.Ustart_fwd_mV = 8000;
+		Mem.Ustart_bwd_mV = 8000;
+		Mem.Uref_min_start_mV = 450;
+
+		Mem.Uref_min_mV = 300;
+		Mem.Uemf_max_stop_mV = 900;
+		Mem.Umin_mV = 0;
 		Mem.motor_p = 8;
+
 		Mem.motor_i = 2;
 		Mem.motor_d = 0;
+		Mem.debug_leds = 1;
+		Mem.time_after_stop = 0;
 
+		Mem.ratio_spd_fwd_Uref = 300;
+		Mem.ratio_spd_bwd_Uref = 300;
+		Mem.speed_min_start = 15;
+		Mem.speed_min = 10;
 
 		mem_write_config();
 

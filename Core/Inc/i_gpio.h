@@ -44,10 +44,11 @@ typedef enum{
 #define TEST_PIN3 {GPIOB, GPIO_PIN_0}
 #define TEST_PIN4 {GPIOA, GPIO_PIN_7}
 
-#define FRONT_LIGHT {GPIOC, GPIO_PIN_14}
-#define CAB_LIGHT {GPIOC, GPIO_PIN_15}
-#define REAR_LIGHT {GPIOH, GPIO_PIN_0}
-#define OPT_LIGHT {GPIOA, GPIO_PIN_2}
+#define FRONT_LIGHT2 {GPIOC, GPIO_PIN_14}
+#define FRONT_LIGHT {GPIOC, GPIO_PIN_15}
+#define REAR_LIGHT2 {GPIOH, GPIO_PIN_0}
+#define REAR_LIGHT {GPIOH, GPIO_PIN_1}
+#define CAB_LIGHT {GPIOA, GPIO_PIN_2}
 
 #define DEBUG_LED_ORANGE {GPIOA, GPIO_PIN_12}
 #define DEBUG_LED_RED {GPIOA, GPIO_PIN_10}
@@ -127,6 +128,8 @@ struct RegPin {
 // --------------------------------------------------
 // --------------- GPIO function --------------
 // --------------------------------------------------
+
+void mot_current_source(uint32_t state);
 
 void gpio_reinit_for_hw_compatibility(void);
 

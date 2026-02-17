@@ -35,6 +35,20 @@ void gpio_reinit_for_hw_compatibility(void)
 
 }
 
+void mot_current_source(uint32_t state)
+{
+	if(state == ENABLE)
+	{
+		// Set PIN as push-pull to high state
+		GPIO_WRITE(PIN_CURRENT_EN, TRUE);
+	}
+	else
+	{
+		// Set PIN as push-pull to low state
+		GPIO_WRITE(PIN_CURRENT_EN, FALSE);
+	}
+}
+
 
 static void gpio_init_HW_1v1(void)
 {
