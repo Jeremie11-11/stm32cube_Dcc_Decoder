@@ -51,7 +51,7 @@ struct MEM_CONFIG_STRUCT{
 	uint32_t Rcoil_bwd_mOhm;
 	uint32_t Ustart_fwd_mV;
 	uint32_t Ustart_bwd_mV;
-	uint32_t Uref_min_start_mV;
+	uint32_t Hw_version;
 
 	uint32_t Uref_min_mV;
 	uint32_t Uemf_max_stop_mV;

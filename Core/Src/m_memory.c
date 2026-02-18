@@ -63,7 +63,7 @@ void mem_init(void)
 		Mem.Rcoil_bwd_mOhm = 18000;
 		Mem.Ustart_fwd_mV = 8000;
 		Mem.Ustart_bwd_mV = 8000;
-		Mem.Uref_min_start_mV = 450;
+		Mem.Hw_version = HARDWARE_VERSION_1v6;
 
 		Mem.Uref_min_mV = 300;
 		Mem.Uemf_max_stop_mV = 900;

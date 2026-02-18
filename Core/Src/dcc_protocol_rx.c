@@ -279,22 +279,43 @@ void dcc_update_functions(void)
 {
 	mot_current_source(ENABLE);
 
-	if(DccInst.actual_dir == DIR_FORWARDS)
+	if(Mem.Hw_version <= HARDWARE_VERSION_1v5)
 	{
-		GPIO_WRITE(FRONT_LIGHT, (DccInst.functions >> 0) & 0x01);
-		GPIO_WRITE(FRONT_LIGHT2, (DccInst.functions >> 1) & 0x01);
-		GPIO_WRITE(REAR_LIGHT, FALSE);
-		GPIO_WRITE(REAR_LIGHT2, (DccInst.functions >> 2) & 0x01);
+		// Ensure retro-compatibility
+
+		if(DccInst.actual_dir == DIR_FORWARDS)
+		{
+			GPIO_WRITE(HW15_FRONT_LIGHT, (DccInst.functions >> 0) & 0x01);
+			GPIO_WRITE(HW15_REAR_LIGHT, FALSE);
+		}
+		else
+		{
+			GPIO_WRITE(HW15_REAR_LIGHT, (DccInst.functions >> 0) & 0x01);
+			GPIO_WRITE(HW15_FRONT_LIGHT, FALSE);
+		}
+
+		GPIO_WRITE(HW15_CAB_LIGHT, (DccInst.functions >> 3) & 0x01);
+
 	}
 	else
 	{
-		GPIO_WRITE(REAR_LIGHT, (DccInst.functions >> 0) & 0x01);
-		GPIO_WRITE(REAR_LIGHT2, (DccInst.functions >> 1) & 0x01);
-		GPIO_WRITE(FRONT_LIGHT, FALSE);
-		GPIO_WRITE(FRONT_LIGHT2, (DccInst.functions >> 2) & 0x01);
-	}
+		if(DccInst.actual_dir == DIR_FORWARDS)
+		{
+			GPIO_WRITE(FRONT_LIGHT, (DccInst.functions >> 0) & 0x01);
+			GPIO_WRITE(FRONT_LIGHT2, (DccInst.functions >> 1) & 0x01);
+			GPIO_WRITE(REAR_LIGHT, FALSE);
+			GPIO_WRITE(REAR_LIGHT2, (DccInst.functions >> 2) & 0x01);
+		}
+		else
+		{
+			GPIO_WRITE(REAR_LIGHT, (DccInst.functions >> 0) & 0x01);
+			GPIO_WRITE(REAR_LIGHT2, (DccInst.functions >> 1) & 0x01);
+			GPIO_WRITE(FRONT_LIGHT, FALSE);
+			GPIO_WRITE(FRONT_LIGHT2, (DccInst.functions >> 2) & 0x01);
+		}
 
-	GPIO_WRITE(CAB_LIGHT, (DccInst.functions >> 3) & 0x01);
+		GPIO_WRITE(CAB_LIGHT, (DccInst.functions >> 3) & 0x01);
+	}
 	//GPIO_WRITE(OPT_LIGHT, (DccInst.functions >> 4) & 0x01);
 
 	//tim_set_light(opt_light, DccInst.functions);
