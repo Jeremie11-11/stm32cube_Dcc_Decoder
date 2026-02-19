@@ -162,7 +162,10 @@ void dcc_check_for_new_messages(void)
 
 	// Led green blinking(20ms ON) when dedicated message received
 	DccDebug.recieved_msg = 1;
-	debug_set_led_status_green(LED_DCC_COM, 20);
+	if(DccInst.signal_state != SIGNAL_STOP)
+		debug_set_led_status_green(LED_DCC_COM, 180);
+	else
+		debug_set_led_status_green(LED_DCC_COM, 20);
 
 	// Check for new content
 	if(msg_with_new_content(buffer, len) == FALSE)
