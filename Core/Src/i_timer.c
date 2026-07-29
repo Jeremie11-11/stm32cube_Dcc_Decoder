@@ -5,6 +5,7 @@
  *      Author: J. Frueh
  */
 
+#include <dcc_uplink.h>
 #include <i_adc.h>
 #include <i_timer.h>
 #include <m_memory.h>
@@ -26,7 +27,8 @@ void tim_init(void)
 	tim_set_motor_bridge(DIR_STOPPED);
 
 	// ---------- TIM2 ----------
-	// Timer used for lights PWM generation (Dimmer)
+	// Timer used for OPT PWM generation (Dimmer)
+	// To be updated...
 	TIM2->ARR = PWM_LIGHT_PERIOD_CNT;
 	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
 	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2);
@@ -38,7 +40,19 @@ void tim_init(void)
 	HAL_TIM_Base_Start(&htim15);
 
 	// ---------- TIM16 ----------
-	//HAL_TIM_Base_Start_IT(&htim16);
+	// Timer used for "Reverse communication" timings
+	dcc_reverse_com_init();
+	HAL_TIM_Base_Start_IT(&htim16);
+}
+
+
+// Reverse communication time base
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+	if (htim->Instance == TIM16)
+	{
+		dcc_reverse_com_tick();
+	}
 }
 
 

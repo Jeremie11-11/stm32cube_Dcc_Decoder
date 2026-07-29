@@ -7,10 +7,11 @@
 
 #include <dcc_physical_layer.h>
 #include <dcc_protocol_rx.h>
+#include "dcc_uplink.h"
 #include <i_adc.h>
 #include <i_timer.h>
 #include <m_memory.h>
-//#include "motor.h"
+
 
 
 extern DCC_PROTOCOL_STRUCT DccRx;
@@ -148,6 +149,8 @@ void dcc_check_for_new_messages(void)
 	// Led green blinking(5Hz) when communication is working
 	if((DccDebug.recieved_msg%20) == 0)
 		debug_toggle_led_status_green(LED_DCC_COM, 2000);
+	if((DccDebug.recieved_msg%400) == 0)
+		dcc_reverse_com_stop();
 
 	buffer = DccRx.msg[DccRx.msg_out_i].data;
 	len = DccRx.msg[DccRx.msg_out_i].len;
@@ -174,6 +177,9 @@ void dcc_check_for_new_messages(void)
 		DccRx.msg_out_i = (DccRx.msg_out_i + 1) & (DCC_MAX_MESSAGES_QUEUE-1);
 		return;
 	}
+
+	// Start DCC uplink communication
+	dcc_reverse_com_start(Mem.address);
 
 	// ----------------------------------------------------------------------
 	// --------------------- Message with new contents ----------------------
