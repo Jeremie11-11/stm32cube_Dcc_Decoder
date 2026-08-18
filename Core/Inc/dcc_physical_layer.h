@@ -19,6 +19,10 @@
 #define DMA_TIME_BUFFER_LENGTH 64
 #define DMA_TIME_IDX_MASK (DMA_TIME_BUFFER_LENGTH-1)
 
+#define DCC_TIMEOUT_TIME_COUNT 8
+#define DCC_TIMEOUT_QUEUE_LENGTH 8
+#define DCC_TIMEOUT_QUEUE_MASK (DCC_TIMEOUT_QUEUE_LENGTH-1)
+
 
 #define DCC_RX_PREAMBLE_INIT 21
 #define DCC_RX_ZERO_LOW 17
@@ -72,6 +76,16 @@ typedef struct{
 	uint8_t gpio[2048];
 	uint32_t idx;
 } DCC_DEBUG2_STRUCT;
+
+typedef struct{
+	uint8_t t[DCC_TIMEOUT_QUEUE_LENGTH][DCC_TIMEOUT_TIME_COUNT];
+	uint8_t time[DCC_TIMEOUT_QUEUE_LENGTH][DCC_TIMEOUT_TIME_COUNT];
+	uint8_t time_idx;
+	uint8_t in_idx;
+	uint8_t out_idx;
+} DCC_TIMEOUT_STRUCT;
+
+extern DCC_TIMEOUT_STRUCT DccTimeout;
 
 void dcc_physical_layer_init(void);
 

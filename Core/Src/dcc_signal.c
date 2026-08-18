@@ -27,6 +27,23 @@ static const int16_t signal_speed_limit[] =
 	[SIGNAL_FREE] = 320
 };
 
+typedef struct
+{
+	uint8_t length[DCC_TIMEOUT_TIME_COUNT];
+	signal_state_t signal_state;
+} DCC_TIMEOUT_PATTERN_STRUCT;
+
+static const DCC_TIMEOUT_PATTERN_STRUCT dcc_timeout_pattern[] =
+{
+	{{1, 1, 1, 1, 1, 1, 1, 1}, SIGNAL_NOCHANGE},
+	{{1, 1, 1, 1, 1, 3, 1, 1}, SIGNAL_STOP},
+	{{1, 1, 1, 3, 1, 1, 1, 1}, SIGNAL_60KMH},
+	{{1, 1, 1, 5, 1, 1, 1, 1}, SIGNAL_40KMH},
+	{{1, 3, 1, 1, 1, 1, 1, 1}, SIGNAL_90KMH},
+	{{1, 3, 1, 3, 1, 1, 1, 1}, SIGNAL_NOCHANGE},
+	{{1, 5, 1, 1, 1, 1, 1, 1}, SIGNAL_FREE}
+};
+
 
 void signal_speed_limit_update()
 {
@@ -38,18 +55,13 @@ void signal_speed_limit_update()
 }
 
 
-void signal_update()
+static void signal_filter_update(signal_state_t detected_state)
 {
-
-	while(DccSignal.out_idx != DccSignal.in_idx)
+	switch(detected_state)
 	{
-		uint32_t timeout = DccSignal.timeout_tab[DccSignal.out_idx];
-
-		if(timeout < TIMEOUT__THRES_FREE)
-		{
+		case SIGNAL_FREE:
 			if(DccSignal.free_cnt < 10)
 				DccSignal.free_cnt++;
-
 			if(DccSignal.nochange_cnt > 0)
 				DccSignal.nochange_cnt--;
 			if(DccSignal.sp90kmh_cnt > 0)
@@ -60,12 +72,11 @@ void signal_update()
 				DccSignal.sp40kmh_cnt--;
 			if(DccSignal.stop_cnt > 0)
 				DccSignal.stop_cnt--;
-		}
-		else if(timeout < TIMEOUT__THRES_NOCHANGE)
-		{
+			break;
+
+		case SIGNAL_NOCHANGE:
 			if(DccSignal.nochange_cnt < 10)
 				DccSignal.nochange_cnt++;
-
 			if(DccSignal.free_cnt > 0)
 				DccSignal.free_cnt--;
 			if(DccSignal.sp90kmh_cnt > 0)
@@ -76,12 +87,11 @@ void signal_update()
 				DccSignal.sp40kmh_cnt--;
 			if(DccSignal.stop_cnt > 0)
 				DccSignal.stop_cnt--;
-		}
-		else if(timeout < TIMEOUT__THRES_90KMH)
-		{
+			break;
+
+		case SIGNAL_90KMH:
 			if(DccSignal.sp90kmh_cnt < 10)
 				DccSignal.sp90kmh_cnt++;
-
 			if(DccSignal.free_cnt > 0)
 				DccSignal.free_cnt--;
 			if(DccSignal.nochange_cnt > 0)
@@ -92,12 +102,11 @@ void signal_update()
 				DccSignal.sp40kmh_cnt--;
 			if(DccSignal.stop_cnt > 0)
 				DccSignal.stop_cnt--;
-		}
-		else if(timeout < TIMEOUT__THRES_60KMH)
-		{
+			break;
+
+		case SIGNAL_60KMH:
 			if(DccSignal.sp60kmh_cnt < 10)
 				DccSignal.sp60kmh_cnt++;
-
 			if(DccSignal.free_cnt > 0)
 				DccSignal.free_cnt--;
 			if(DccSignal.nochange_cnt > 0)
@@ -108,12 +117,11 @@ void signal_update()
 				DccSignal.sp40kmh_cnt--;
 			if(DccSignal.stop_cnt > 0)
 				DccSignal.stop_cnt--;
-		}
-		else if(timeout < TIMEOUT__THRES_40KMH)
-		{
+			break;
+
+		case SIGNAL_40KMH:
 			if(DccSignal.sp40kmh_cnt < 10)
 				DccSignal.sp40kmh_cnt++;
-
 			if(DccSignal.free_cnt > 0)
 				DccSignal.free_cnt--;
 			if(DccSignal.nochange_cnt > 0)
@@ -124,12 +132,11 @@ void signal_update()
 				DccSignal.sp60kmh_cnt--;
 			if(DccSignal.stop_cnt > 0)
 				DccSignal.stop_cnt--;
-		}
-		else if(timeout < TIMEOUT__THRES_STOP)
-		{
+			break;
+
+		case SIGNAL_STOP:
 			if(DccSignal.stop_cnt < 10)
 				DccSignal.stop_cnt++;
-
 			if(DccSignal.free_cnt > 0)
 				DccSignal.free_cnt--;
 			if(DccSignal.nochange_cnt > 0)
@@ -140,7 +147,11 @@ void signal_update()
 				DccSignal.sp60kmh_cnt--;
 			if(DccSignal.sp40kmh_cnt > 0)
 				DccSignal.sp40kmh_cnt--;
-		}
+			break;
+
+		default:
+			break;
+	}
 
 		signal_state_t signal_state_new = DccInst.signal_state;
 
@@ -287,6 +298,60 @@ void signal_update()
 		{
 			DccInst.signal_state = signal_state_new;
 		}
+
+	}
+
+
+void dcc_signal_update(void)
+{
+	while(DccTimeout.out_idx != DccTimeout.in_idx)
+	{
+		for(uint32_t i = 0; i < (sizeof(dcc_timeout_pattern) / sizeof(dcc_timeout_pattern[0])); i++)
+		{
+			uint8_t pattern_match = TRUE;
+
+			for(uint32_t time_idx = 0; time_idx < DCC_TIMEOUT_TIME_COUNT; time_idx++)
+			{
+				if(DccTimeout.time[DccTimeout.out_idx][time_idx] != dcc_timeout_pattern[i].length[time_idx])
+				{
+					pattern_match = FALSE;
+					break;
+				}
+			}
+
+			if(pattern_match == TRUE)
+			{
+				signal_filter_update(dcc_timeout_pattern[i].signal_state);
+				break;
+			}
+		}
+
+		DccTimeout.out_idx = (DccTimeout.out_idx + 1U) & DCC_TIMEOUT_QUEUE_MASK;
+	}
+}
+
+
+void signal_update()
+{
+	while(DccSignal.out_idx != DccSignal.in_idx)
+	{
+		uint32_t timeout = DccSignal.timeout_tab[DccSignal.out_idx];
+		signal_state_t detected_state = (signal_state_t)0xFF;
+
+		if(timeout < TIMEOUT__THRES_FREE)
+			detected_state = SIGNAL_FREE;
+		else if(timeout < TIMEOUT__THRES_NOCHANGE)
+			detected_state = SIGNAL_NOCHANGE;
+		else if(timeout < TIMEOUT__THRES_90KMH)
+			detected_state = SIGNAL_90KMH;
+		else if(timeout < TIMEOUT__THRES_60KMH)
+			detected_state = SIGNAL_60KMH;
+		else if(timeout < TIMEOUT__THRES_40KMH)
+			detected_state = SIGNAL_40KMH;
+		else if(timeout < TIMEOUT__THRES_STOP)
+			detected_state = SIGNAL_STOP;
+
+		signal_filter_update(detected_state);
 
 		DccSignal.out_idx++;
 		DccSignal.out_idx &= 0x07;

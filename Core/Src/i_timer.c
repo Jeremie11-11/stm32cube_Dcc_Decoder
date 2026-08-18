@@ -40,7 +40,7 @@ void tim_init(void)
 	HAL_TIM_Base_Start(&htim15);
 
 	// ---------- TIM16 ----------
-	// Timer used for "Reverse communication" timings
+	// Timer used for DCC_Uplink timings
 	dcc_reverse_com_init();
 	HAL_TIM_Base_Start_IT(&htim16);
 }

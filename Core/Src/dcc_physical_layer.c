@@ -16,6 +16,7 @@ DCC_PHYSICAL_LAYER_STRUCT Dma_Struct;
 
 DCC_DEBUG_STRUCT DccDebug;
 DCC_DEBUG2_STRUCT DccDebug2;
+DCC_TIMEOUT_STRUCT DccTimeout;
 
 extern DMA_STRUCT Dma;
 extern DCC_INSTRUCTION_STRUCT DccInst;
@@ -27,6 +28,9 @@ void dcc_physical_layer_init(void)
 	DccDebug.recieved_msg = 0;
 	DccSignal.in_idx = 0;
 	DccSignal.out_idx = 0;
+	DccTimeout.time_idx = DCC_TIMEOUT_TIME_COUNT;
+	DccTimeout.in_idx = 0;
+	DccTimeout.out_idx = 0;
 }
 
 
@@ -79,6 +83,35 @@ void dcc_dma_update(uint32_t buffer_full)
 }
 
 
+static uint8_t dcc_timeout_get_length(uint16_t time)
+{
+	if(time < TIMEOUT__THRES_BIT1)
+		return 1;
+	else if(time < TIMEOUT__THRES_BIT2)
+		return 3;
+	else if(time < TIMEOUT__THRES_BIT3)
+		return 5;
+	else if(time < TIMEOUT__THRES_BIT4)
+		return 7;
+
+	return 0;
+}
+
+
+static void dcc_timeout_capture(uint16_t time_us)
+{
+	if(DccTimeout.time_idx >= DCC_TIMEOUT_TIME_COUNT)
+		return;
+
+	DccTimeout.t[DccTimeout.in_idx][DccTimeout.time_idx] = (uint8_t)(time_us/10);
+	DccTimeout.time[DccTimeout.in_idx][DccTimeout.time_idx] = dcc_timeout_get_length(time_us);
+	DccTimeout.time_idx++;
+
+	if(DccTimeout.time_idx == DCC_TIMEOUT_TIME_COUNT)
+		DccTimeout.in_idx = (DccTimeout.in_idx + 1U) & DCC_TIMEOUT_QUEUE_MASK;
+}
+
+
 void dcc_rx_update(void)
 {
 	uint32_t val;
@@ -88,6 +121,9 @@ void dcc_rx_update(void)
 	// Check for new values
 	while(Dma_Struct.idx_out0 != Dma_Struct.idx_in)
 	{
+		// Capture timings without interrupting the regular DCC decoder
+		dcc_timeout_capture(Dma_Struct.time_buffer[Dma_Struct.idx_out0] * 10U);
+
 		// The communication protocol is based on the period time
 		val = Dma_Struct.time_buffer[Dma_Struct.idx_out0] + Dma_Struct.time_buffer[Dma_Struct.idx_out1];
 
@@ -211,6 +247,8 @@ void dcc_rx_update(void)
 							DccRx.msg_in_i = (DccRx.msg_in_i + 1) & (DCC_MAX_MESSAGES_QUEUE-1);
 							DccRx.preamble_i = DCC_RX_PREAMBLE_INIT;
 							DccRx.timeout = 0;
+
+							DccTimeout.time_idx = 0;
 
 						}
 					}

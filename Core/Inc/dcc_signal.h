@@ -21,6 +21,12 @@ enum{
 	TIMEOUT__THRES_STOP 		= 812
 };
 
+enum{
+	TIMEOUT__THRES_BIT1 		= 116,
+	TIMEOUT__THRES_BIT2 		= 232,
+	TIMEOUT__THRES_BIT3 		= 348,
+	TIMEOUT__THRES_BIT4 		= 464
+};
 
 typedef struct{
 	uint16_t free_cnt;
@@ -37,6 +43,8 @@ typedef struct{
 
 
 void signal_speed_limit_update(void);
+
+void dcc_signal_update(void);
 
 
 #endif /* INC_DCC_SIGNAL_H_ */
