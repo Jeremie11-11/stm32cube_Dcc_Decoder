@@ -73,7 +73,7 @@ void mem_init(void)
 		Mem.motor_i = 2;
 		Mem.motor_d = 0;
 		Mem.debug_leds = 1;
-		Mem.time_after_stop = 0;
+		Mem.unused = 0;
 
 		Mem.ratio_spd_fwd_Uref = 300;
 		Mem.ratio_spd_bwd_Uref = 300;

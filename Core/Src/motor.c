@@ -39,10 +39,20 @@ void mot_init(uint32_t backup_valid)
 	if(backup_valid == TRUE)
 	{
 		Motor.use_backup_register = TRUE;
+
+		if(DccInst.actual_speed != 0)
+			// Motor startup as soon as possible
+			cnt_start(COUNTER_MOTOR_SPEED_UPDATE, 0U);
+		else
+			// Delay motor startup when actual_speed is zero
+			cnt_start(COUNTER_MOTOR_SPEED_UPDATE, 2000U);
 	}
 	else
 	{
 		Motor.use_backup_register = FALSE;
+
+		// Delay motor startup when no valid backup is available
+		cnt_start(COUNTER_MOTOR_SPEED_UPDATE, 2000U);
 	}
 }
 

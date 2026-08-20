@@ -24,9 +24,6 @@ typedef enum{
 		COUNTER_MOTOR_SPEED1_TIMEOUT,
 		COUNTER_MOTOR_SLOW_START,
 
-		// Counters for the signal
-		COUNTER_SIGNAL_FREEZE,
-
 		NBR_COUNTERS	// Variable used to get the number of declared counter
 } counters_enum;
 

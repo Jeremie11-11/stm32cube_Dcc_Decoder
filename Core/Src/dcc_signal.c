@@ -8,13 +8,11 @@
 #include <dcc_signal.h>
 
 #include <dcc_protocol_rx.h>
-#include <m_memory.h>
 
 
 DCC_SIGNAL_STRUCT DccSignal;
 
 extern DCC_INSTRUCTION_STRUCT DccInst;
-extern struct MEM_CONFIG_STRUCT Mem;
 
 
 
@@ -153,23 +151,21 @@ static void signal_filter_update(signal_state_t detected_state)
 			break;
 	}
 
-		signal_state_t signal_state_new = DccInst.signal_state;
-
 		if(DccInst.signal_state == SIGNAL_FREE)
 		{
 			// ----- Signal is green -----
 
 			// Check for signal state change
 			if(DccSignal.nochange_cnt > (DccSignal.free_cnt+2))
-				signal_state_new = SIGNAL_NOCHANGE;
+				DccInst.signal_state = SIGNAL_NOCHANGE;
 			else if(DccSignal.sp90kmh_cnt > (DccSignal.free_cnt+2))
-				signal_state_new = SIGNAL_90KMH;
+				DccInst.signal_state = SIGNAL_90KMH;
 			else if(DccSignal.sp60kmh_cnt > (DccSignal.free_cnt+2))
-				signal_state_new = SIGNAL_60KMH;
+				DccInst.signal_state = SIGNAL_60KMH;
 			else if(DccSignal.sp40kmh_cnt > (DccSignal.free_cnt+2))
-				signal_state_new = SIGNAL_40KMH;
+				DccInst.signal_state = SIGNAL_40KMH;
 			else if(DccSignal.stop_cnt > (DccSignal.free_cnt+2))
-				signal_state_new = SIGNAL_STOP;
+				DccInst.signal_state = SIGNAL_STOP;
 
 			GPIO_WRITE(TEST_PIN2, TRUE);
 			GPIO_WRITE(TEST_PIN3, FALSE);
@@ -179,15 +175,15 @@ static void signal_filter_update(signal_state_t detected_state)
 		{
 			// ----- Signal is "no change" -----
 			if(DccSignal.free_cnt > (DccSignal.nochange_cnt + 2))
-				signal_state_new = SIGNAL_FREE;
+				DccInst.signal_state = SIGNAL_FREE;
 			else if(DccSignal.sp90kmh_cnt > (DccSignal.nochange_cnt + 2))
-				signal_state_new = SIGNAL_90KMH;
+				DccInst.signal_state = SIGNAL_90KMH;
 			else if(DccSignal.sp60kmh_cnt > (DccSignal.nochange_cnt + 2))
-				signal_state_new = SIGNAL_60KMH;
+				DccInst.signal_state = SIGNAL_60KMH;
 			else if(DccSignal.sp40kmh_cnt > (DccSignal.nochange_cnt + 2))
-				signal_state_new = SIGNAL_40KMH;
+				DccInst.signal_state = SIGNAL_40KMH;
 			else if(DccSignal.stop_cnt > (DccSignal.nochange_cnt + 2))
-				signal_state_new = SIGNAL_STOP;
+				DccInst.signal_state = SIGNAL_STOP;
 
 			GPIO_WRITE(TEST_PIN2, FALSE);
 			GPIO_WRITE(TEST_PIN3, FALSE);
@@ -197,15 +193,15 @@ static void signal_filter_update(signal_state_t detected_state)
 		{
 			// ----- Signal is 90km/h -----
 			if(DccSignal.free_cnt > (DccSignal.sp90kmh_cnt + 2))
-				signal_state_new = SIGNAL_FREE;
+				DccInst.signal_state = SIGNAL_FREE;
 			else if(DccSignal.nochange_cnt > (DccSignal.sp90kmh_cnt + 2))
-				signal_state_new = SIGNAL_NOCHANGE;
+				DccInst.signal_state = SIGNAL_NOCHANGE;
 			else if(DccSignal.sp60kmh_cnt > (DccSignal.sp90kmh_cnt + 2))
-				signal_state_new = SIGNAL_60KMH;
+				DccInst.signal_state = SIGNAL_60KMH;
 			else if(DccSignal.sp40kmh_cnt > (DccSignal.sp90kmh_cnt + 2))
-				signal_state_new = SIGNAL_40KMH;
+				DccInst.signal_state = SIGNAL_40KMH;
 			else if(DccSignal.stop_cnt > (DccSignal.sp90kmh_cnt + 2))
-				signal_state_new = SIGNAL_STOP;
+				DccInst.signal_state = SIGNAL_STOP;
 
 			GPIO_WRITE(TEST_PIN2, TRUE);
 			GPIO_WRITE(TEST_PIN3, TRUE);
@@ -215,15 +211,15 @@ static void signal_filter_update(signal_state_t detected_state)
 		{
 			// ----- Signal is 60km/h -----
 			if(DccSignal.free_cnt > (DccSignal.sp60kmh_cnt + 2))
-				signal_state_new = SIGNAL_FREE;
+				DccInst.signal_state = SIGNAL_FREE;
 			else if(DccSignal.nochange_cnt > (DccSignal.sp60kmh_cnt + 2))
-				signal_state_new = SIGNAL_NOCHANGE;
+				DccInst.signal_state = SIGNAL_NOCHANGE;
 			else if(DccSignal.sp90kmh_cnt > (DccSignal.sp60kmh_cnt + 2))
-				signal_state_new = SIGNAL_90KMH;
+				DccInst.signal_state = SIGNAL_90KMH;
 			else if(DccSignal.sp40kmh_cnt > (DccSignal.sp60kmh_cnt + 2))
-				signal_state_new = SIGNAL_40KMH;
+				DccInst.signal_state = SIGNAL_40KMH;
 			else if(DccSignal.stop_cnt > (DccSignal.sp60kmh_cnt + 2))
-				signal_state_new = SIGNAL_STOP;
+				DccInst.signal_state = SIGNAL_STOP;
 
 			GPIO_WRITE(TEST_PIN2, FALSE);
 			GPIO_WRITE(TEST_PIN3, TRUE);
@@ -233,15 +229,15 @@ static void signal_filter_update(signal_state_t detected_state)
 		{
 			// ----- Signal is 40km/h -----
 			if(DccSignal.free_cnt > (DccSignal.sp40kmh_cnt + 2))
-				signal_state_new = SIGNAL_FREE;
+				DccInst.signal_state = SIGNAL_FREE;
 			else if(DccSignal.nochange_cnt > (DccSignal.sp40kmh_cnt + 2))
-				signal_state_new = SIGNAL_NOCHANGE;
+				DccInst.signal_state = SIGNAL_NOCHANGE;
 			else if(DccSignal.sp90kmh_cnt > (DccSignal.sp40kmh_cnt + 2))
-				signal_state_new = SIGNAL_90KMH;
+				DccInst.signal_state = SIGNAL_90KMH;
 			else if(DccSignal.sp60kmh_cnt > (DccSignal.sp40kmh_cnt + 2))
-				signal_state_new = SIGNAL_60KMH;
+				DccInst.signal_state = SIGNAL_60KMH;
 			else if(DccSignal.stop_cnt > (DccSignal.sp40kmh_cnt + 2))
-				signal_state_new = SIGNAL_STOP;
+				DccInst.signal_state = SIGNAL_STOP;
 
 			GPIO_WRITE(TEST_PIN2, FALSE);
 			GPIO_WRITE(TEST_PIN3, TRUE);
@@ -251,54 +247,22 @@ static void signal_filter_update(signal_state_t detected_state)
 		{
 			// ----- Signal is stop or unknown -----
 			if(DccSignal.free_cnt > (DccSignal.stop_cnt + 2))
-				signal_state_new = SIGNAL_FREE;
+				DccInst.signal_state = SIGNAL_FREE;
 			else if(DccSignal.nochange_cnt > (DccSignal.stop_cnt + 2))
-				signal_state_new = SIGNAL_NOCHANGE;
+				DccInst.signal_state = SIGNAL_NOCHANGE;
 			else if(DccSignal.sp90kmh_cnt > (DccSignal.stop_cnt + 2))
-			{
-				cnt_start(COUNTER_SIGNAL_FREEZE, (Mem.time_after_stop*4)/9);
-				signal_state_new = SIGNAL_90KMH;
-				DccInst.signal_state = signal_state_new;
-			}
+				DccInst.signal_state = SIGNAL_90KMH;
 			else if(DccSignal.sp60kmh_cnt > (DccSignal.stop_cnt + 2))
-			{
-				cnt_start(COUNTER_SIGNAL_FREEZE, (Mem.time_after_stop*4)/6);
-				signal_state_new = SIGNAL_60KMH;
-				DccInst.signal_state = signal_state_new;
-			}
+				DccInst.signal_state = SIGNAL_60KMH;
 			else if(DccSignal.sp40kmh_cnt > (DccSignal.stop_cnt + 2))
-			{
-				cnt_start(COUNTER_SIGNAL_FREEZE, Mem.time_after_stop);
-				signal_state_new = SIGNAL_40KMH;
-				DccInst.signal_state = signal_state_new;
-			}
+				DccInst.signal_state = SIGNAL_40KMH;
 			else
-			{
-				cnt_start(COUNTER_SIGNAL_FREEZE, 0);
-				signal_state_new = SIGNAL_STOP;
-			}
+				DccInst.signal_state = SIGNAL_STOP;
 
 			GPIO_WRITE(TEST_PIN2, FALSE);
 			GPIO_WRITE(TEST_PIN3, FALSE);
 			GPIO_WRITE(TEST_PIN4, TRUE);
 		}
-
-		if( (cnt_read(COUNTER_SIGNAL_FREEZE) == 0) ||
-				(signal_state_new == SIGNAL_STOP) ||
-				(signal_state_new == SIGNAL_40KMH))
-		{
-			DccInst.signal_state = signal_state_new;
-		}
-		else if(signal_state_new == SIGNAL_NOCHANGE)
-		{
-			DccInst.signal_state = signal_state_new;
-			cnt_start(COUNTER_SIGNAL_FREEZE, 0);
-		}
-		else if(signal_state_new < DccInst.signal_state)
-		{
-			DccInst.signal_state = signal_state_new;
-		}
-
 	}
 
 
