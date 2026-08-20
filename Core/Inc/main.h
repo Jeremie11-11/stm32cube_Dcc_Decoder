@@ -74,6 +74,10 @@ void Error_Handler(void);
 #define GPIO_Output___TIM1_CH1_GPIO_Port GPIOA
 #define GPIO_Output___TIM1_CH2_Pin GPIO_PIN_9
 #define GPIO_Output___TIM1_CH2_GPIO_Port GPIOA
+#define GPIO_Input___DCC_RX_Pin GPIO_PIN_6
+#define GPIO_Input___DCC_RX_GPIO_Port GPIOB
+#define GPIO_Output___DCC_UPLINK_Pin GPIO_PIN_9
+#define GPIO_Output___DCC_UPLINK_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 
