@@ -39,6 +39,7 @@ typedef struct{
 
 typedef struct{
 	signal_state_t signal_state;
+	signal_state_t signal_state_active;	// Valid signal state currently applied to the speed limit
 	int16_t dcc_target_speed;	// Target speed received from DCC
 	int16_t speed_limit;			// Speed limitation from light signal
 	int16_t target_speed;			// Target speed based on DCC target speed and limited through speed limitation

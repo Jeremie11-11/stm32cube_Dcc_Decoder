@@ -16,7 +16,7 @@ extern DCC_INSTRUCTION_STRUCT DccInst;
 
 
 
-static const int16_t signal_speed_limit[] =
+const int16_t signal_speed_limit[] =
 {
 	[SIGNAL_STOP] = 0,
 	[SIGNAL_40KMH] = 40,
@@ -45,11 +45,22 @@ static const DCC_TIMEOUT_PATTERN_STRUCT dcc_timeout_pattern[] =
 
 void signal_speed_limit_update()
 {
-	// Update speed limit
-	if(DccInst.signal_state != SIGNAL_NOCHANGE)
-		DccInst.speed_limit = signal_speed_limit[DccInst.signal_state];
-	else if (DccInst.speed_limit < signal_speed_limit[SIGNAL_40KMH])
-		DccInst.speed_limit = signal_speed_limit[SIGNAL_40KMH];
+	// Keep the last valid state when no new limit is requested
+	switch(DccInst.signal_state)
+	{
+		case SIGNAL_STOP:
+		case SIGNAL_40KMH:
+		case SIGNAL_60KMH:
+		case SIGNAL_90KMH:
+		case SIGNAL_FREE:
+			DccInst.signal_state_active = DccInst.signal_state;
+			break;
+
+		default:
+			break;
+	}
+
+	DccInst.speed_limit = signal_speed_limit[DccInst.signal_state_active];
 }
 
 

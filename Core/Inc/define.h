@@ -9,6 +9,8 @@
 #define INC_DEFINE_H_
 
 
+#define TEST_INRUSH_CURRENT_HIGH 0
+
 #define FALSE 0U
 #define TRUE 1U
 #define DISABLE 0U

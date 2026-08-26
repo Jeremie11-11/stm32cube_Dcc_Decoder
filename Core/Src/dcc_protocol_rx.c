@@ -7,6 +7,7 @@
 
 #include <dcc_physical_layer.h>
 #include <dcc_protocol_rx.h>
+#include <dcc_signal.h>
 #include "dcc_uplink.h"
 #include <i_adc.h>
 #include <i_timer.h>
@@ -24,7 +25,8 @@ DCC_INSTRUCTION_STRUCT DccInst = {
 		.dcc_target_speed = 0,
 		.target_speed = 0,
 		.actual_speed = 0,
-		.signal_state = SIGNAL_FREE
+		.signal_state = SIGNAL_FREE,
+		.signal_state_active = SIGNAL_FREE
 };
 
 
@@ -37,7 +39,9 @@ void dcc_init(uint32_t backup_valid)
 	if(backup_valid == TRUE)
 	{
 		encoded_value = mem_read_backup_register(BACKUP_IDX__DCC_INFO_0);
-		DccInst.signal_state = (encoded_value >> 24) & 0x000000FF;
+		DccInst.signal_state_active = (encoded_value >> 24) & 0x000000FF;
+		DccInst.signal_state = DccInst.signal_state_active;
+		DccInst.speed_limit = signal_speed_limit[DccInst.signal_state_active];
 		DccInst.dcc_target_speed = (encoded_value >> 16) & 0x000000FF;
 		DccInst.actual_speed = (encoded_value >> 8) & 0x000000FF;
 		DccInst.actual_dir = (encoded_value >> 0) & 0x000000FF;
@@ -48,6 +52,8 @@ void dcc_init(uint32_t backup_valid)
 	else
 	{
 		DccInst.signal_state = SIGNAL_FREE;
+		DccInst.signal_state_active = SIGNAL_FREE;
+		DccInst.speed_limit = signal_speed_limit[DccInst.signal_state_active];
 		DccInst.dcc_target_speed = 0;
 		DccInst.actual_speed = 0;
 		DccInst.actual_dir = DIR_DEFAULT_VALUE;
@@ -60,7 +66,7 @@ void dcc_backup_info(void)
 {
 	uint32_t encoded_value;
 
-	encoded_value = (DccInst.signal_state << 24) | (DccInst.dcc_target_speed << 16) | (DccInst.actual_speed << 8) | (DccInst.actual_dir);
+	encoded_value = (DccInst.signal_state_active << 24) | (DccInst.dcc_target_speed << 16) | (DccInst.actual_speed << 8) | (DccInst.actual_dir);
 	mem_write_backup_register(BACKUP_IDX__DCC_INFO_0, encoded_value);
 
 	encoded_value = (DccInst.functions << 24);

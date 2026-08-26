@@ -135,6 +135,10 @@ int main(void)
   MX_TIM16_Init();
   /* USER CODE BEGIN 2 */
 
+#if TEST_INRUSH_CURRENT_HIGH == 1
+	GPIO_WRITE(PIN_CURRENT_EN, TRUE);
+#endif
+
   // Get memory configuration
   mem_init();
 

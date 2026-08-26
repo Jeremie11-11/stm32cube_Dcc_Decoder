@@ -42,6 +42,9 @@ typedef struct{
 } DCC_SIGNAL_STRUCT;
 
 
+extern const int16_t signal_speed_limit[];
+
+
 void signal_speed_limit_update(void);
 
 void dcc_signal_update(void);

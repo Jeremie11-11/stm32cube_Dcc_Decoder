@@ -305,7 +305,6 @@ void mot_pwm_update(void)
 			Motor.i = 0;
 
 		// Set PWM on voltage reference (Following voltage table)
-		//Motor.Unew_mV = (int32_t)(Motor.Uref_op[abs(DccInst.actual_speed)]);
 		Motor.Unew_mV = (int32_t)(4000 + abs(DccInst.actual_speed) * 50);
 		Motor.ccr = (((uint32_t)(Motor.Unew_mV)) * PWM_MOTOR_PERIOD_CNT) / Adc.Uin_mV;
 	}
