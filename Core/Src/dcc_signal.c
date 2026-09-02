@@ -260,7 +260,8 @@ static void signal_filter_update(signal_state_t detected_state)
 			if(DccSignal.free_cnt > (DccSignal.stop_cnt + 2))
 				DccInst.signal_state = SIGNAL_FREE;
 			else if(DccSignal.nochange_cnt > (DccSignal.stop_cnt + 2))
-				DccInst.signal_state = SIGNAL_NOCHANGE;
+				// Allow movement after an unexpected STOP to NOCHANGE transition
+				DccInst.signal_state = SIGNAL_FREE;
 			else if(DccSignal.sp90kmh_cnt > (DccSignal.stop_cnt + 2))
 				DccInst.signal_state = SIGNAL_90KMH;
 			else if(DccSignal.sp60kmh_cnt > (DccSignal.stop_cnt + 2))
