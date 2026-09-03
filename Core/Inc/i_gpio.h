@@ -28,13 +28,8 @@ typedef enum{
 // -------------- GPIO pin definition ---------------
 // --------------------------------------------------
 
-#if (HARDWARE_VERSION == HARDWARE_VERSION_1v1) || (HARDWARE_VERSION == HARDWARE_VERSION_1v2)
-	#define LED_STAT_GREEN {GPIOB, GPIO_PIN_14}
-	#define LED_STAT_RED {GPIOB, GPIO_PIN_15}
-#else
-	#define LED_STAT_GREEN {GPIOB, GPIO_PIN_12}
-	#define LED_STAT_RED {GPIOB, GPIO_PIN_15}
-#endif
+#define LED_STAT_GREEN {GPIOB, GPIO_PIN_12}
+#define LED_STAT_RED {GPIOB, GPIO_PIN_15}
 
 #define CH1_HIGH_SIDE {GPIOA, GPIO_PIN_8}
 #define CH2_HIGH_SIDE {GPIOA, GPIO_PIN_9}
