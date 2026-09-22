@@ -20,6 +20,9 @@ extern DCC_DEBUG_STRUCT DccDebug;
 extern struct MEM_CONFIG_STRUCT Mem;
 extern ADC_STRUCT Adc;
 
+static uint8_t last_msg[DCC_MAX_MESSAGE_LEN];
+static uint8_t last_len = 0U;
+
 DCC_INSTRUCTION_STRUCT DccInst = {
 		.actual_dir = DIR_DEFAULT_VALUE,
 		.dcc_target_speed = 0,
@@ -119,10 +122,8 @@ uint32_t decoded_address_match(DCC_MESSAGE_STRUCT *msg, uint8_t *buffer, uint8_t
 
 // 0: Same content als previous message
 // 1: New content
-uint32_t msg_with_new_content(uint8_t *buffer, uint8_t len)
+static uint32_t msg_with_new_content(const uint8_t *buffer, uint8_t len)
 {
-	static uint8_t last_msg[10], last_len=0;
-
 	if((len != last_len) || (memcmp(buffer, last_msg, len) != 0))
 	{
 		// ----- Difference recognized -----
@@ -134,6 +135,12 @@ uint32_t msg_with_new_content(uint8_t *buffer, uint8_t len)
 		return TRUE;
 	}
 	return FALSE;
+}
+
+
+static void msg_new_content_reset(void)
+{
+	last_len = 0U;
 }
 
 // 1. Check for a new message in the buffer
@@ -153,10 +160,13 @@ void dcc_check_for_new_messages(void)
 	// ----- New message received -----
 
 	// Led green blinking(5Hz) when communication is working
-	if((DccDebug.recieved_msg%20) == 0)
+	if((DccDebug.recieved_msg % 20U) == 0U)
 		debug_toggle_led_status_green(LED_DCC_COM, 2000);
-	if((DccDebug.recieved_msg%400) == 0)
+	if((DccDebug.recieved_msg % 400U) == 0U)
+	{
 		dcc_reverse_com_stop();
+		msg_new_content_reset();
+	}
 
 	buffer = DccRx.msg[DccRx.msg_out_i].data;
 	len = DccRx.msg[DccRx.msg_out_i].len;
@@ -169,12 +179,12 @@ void dcc_check_for_new_messages(void)
 		return;
 	}
 
-	// Led green blinking(20ms ON) when dedicated message received
-	DccDebug.recieved_msg = 1;
+	// Led green blinking when an addressed or broadcast message is received
+	DccDebug.recieved_msg = 1U;
 	if(DccInst.signal_state != SIGNAL_STOP)
-		debug_set_led_status_green(LED_DCC_COM, 180);
+		debug_set_led_status_green(LED_DCC_COM, 180U);
 	else
-		debug_set_led_status_green(LED_DCC_COM, 20);
+		debug_set_led_status_green(LED_DCC_COM, 20U);
 
 	// Check for new content
 	if(msg_with_new_content(buffer, len) == FALSE)
@@ -184,8 +194,11 @@ void dcc_check_for_new_messages(void)
 		return;
 	}
 
-	// Start DCC uplink communication
-	dcc_reverse_com_start(Mem.address);
+	if(msg.addr != ADDR_BROADCAST)
+	{
+		// Start DCC uplink communication
+		dcc_reverse_com_start(Mem.address);
+	}
 
 	// ----------------------------------------------------------------------
 	// --------------------- Message with new contents ----------------------
