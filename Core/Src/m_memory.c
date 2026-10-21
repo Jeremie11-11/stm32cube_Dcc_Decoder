@@ -100,20 +100,10 @@ void mem_write_request(void)
 
 void mem_update(void)
 {
-	struct MEM_CONFIG_STRUCT expected_config;
-
 	if((config_write_pending == FALSE) || (cnt_read(COUNTER_CONFIG_INACTIVITY) > 0U))
 		return;
 
-	memcpy(&expected_config, &Mem, sizeof(expected_config));
 	mem_write_config();
-
-	if(memcmp(&expected_config, &Mem, sizeof(expected_config)) != 0)
-	{
-		// Restore the requested values before the single retry
-		memcpy(&Mem, &expected_config, sizeof(Mem));
-		mem_write_config();
-	}
 
 	NVIC_SystemReset();
 }
@@ -178,9 +168,22 @@ void mem_read_config(void)
 
 void mem_write_config(void)
 {
+	struct MEM_CONFIG_STRUCT read_config;
+
 	mem_write_page(PAGE_CONFIG, (void *)&Mem, sizeof(Mem));
 
-	mem_read_page(PAGE_CONFIG, (void *)&Mem, sizeof(Mem));
+	mem_read_page(PAGE_CONFIG, (void *)&read_config, sizeof(read_config));
+
+	// Allow a retry if write and read are different
+	if(memcmp(&read_config, &Mem, sizeof(Mem)) != 0)
+	{
+		mem_write_page(PAGE_CONFIG, (void *)&Mem, sizeof(Mem));
+
+		mem_read_page(PAGE_CONFIG, (void *)&read_config, sizeof(read_config));
+
+		// Load the configuration written in the flash
+		memcpy(&Mem, &read_config, sizeof(read_config));
+	}
 }
 
 

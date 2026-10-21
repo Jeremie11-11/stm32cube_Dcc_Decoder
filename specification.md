@@ -42,11 +42,11 @@ When a stable `SIGNAL_NOCHANGE` is detected while the decoder is in `SIGNAL_STOP
 
 ## DCC Memory programming
 
-Each accepted DCC Memory message updates the active configuration in RAM immediately and reloads a one-second delay before saving to Flash. This includes immediate changes to the decoder address. Existing message confirmation and duplicate rejection remain unchanged. Rejected messages and invalid memory indexes do not reload the delay.
+Each accepted DCC Memory message updates the active configuration in RAM immediately and reloads a two-second delay before saving to Flash. This includes immediate changes to the decoder address. Existing message confirmation and duplicate rejection remain unchanged. Rejected messages and invalid memory indexes do not reload the delay.
 
-When a configuration write is pending and the one-second delay expires, the decoder saves its operating state using the existing backup and writes the configuration to Flash, then reads it back. It compares the read-back configuration with a copy of the requested RAM values. The write is not conditioned on the message queue or DMA state.
+When a configuration write is pending and the two-second delay expires, the decoder writes the configuration to Flash, then reads it into a separate buffer for comparison with the requested RAM values. The write is not conditioned on the message queue or DMA state.
 
-If the comparison fails, the decoder restores the requested RAM values and performs one additional write and read. It then restarts regardless of the retry outcome. There is no error state or dedicated error LED indication. Parameters calculated only at startup take effect after this restart. A power loss before saving discards unsaved RAM changes. Flash writing and restarting can temporarily interrupt DCC reception and motor control.
+If the comparison fails, the decoder performs one additional write using the unchanged requested RAM values, reads Flash again, and loads the read-back values into RAM. It then restarts regardless of the retry outcome. There is no error state or dedicated error LED indication. Parameters calculated only at startup take effect after this restart. A power loss before saving discards unsaved RAM changes. Flash writing and restarting can temporarily interrupt DCC reception and motor control.
 
 ## Confirmed message history
 
