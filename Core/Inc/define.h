@@ -30,7 +30,8 @@ typedef enum{
 	SIGNAL_60KMH 		= 3,
 	SIGNAL_90KMH 		= 4,
 	SIGNAL_NOCHANGE	= 5,
-	SIGNAL_FREE 		= 6
+	SIGNAL_FREE 		= 6,
+	SIGNAL_NBR
 
 }signal_state_t;
 

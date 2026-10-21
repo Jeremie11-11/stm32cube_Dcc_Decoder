@@ -12,6 +12,7 @@
 #include <i_adc.h>
 #include <i_timer.h>
 #include <m_memory.h>
+#include <m_counter.h>
 
 
 
@@ -22,6 +23,8 @@ extern ADC_STRUCT Adc;
 
 static uint8_t last_msg[DCC_MAX_MESSAGE_LEN];
 static uint8_t last_len = 0U;
+static uint8_t last_confirmed = FALSE;
+
 
 DCC_INSTRUCTION_STRUCT DccInst = {
 		.actual_dir = DIR_DEFAULT_VALUE,
@@ -43,7 +46,6 @@ void dcc_init(uint32_t backup_valid)
 	{
 		encoded_value = mem_read_backup_register(BACKUP_IDX__DCC_INFO_0);
 		DccInst.signal_state_active = (encoded_value >> 24) & 0x000000FF;
-		DccInst.signal_state = DccInst.signal_state_active;
 		DccInst.speed_limit = signal_speed_limit[DccInst.signal_state_active];
 		DccInst.dcc_target_speed = (encoded_value >> 16) & 0x000000FF;
 		DccInst.actual_speed = (encoded_value >> 8) & 0x000000FF;
@@ -51,6 +53,8 @@ void dcc_init(uint32_t backup_valid)
 
 		encoded_value = mem_read_backup_register(BACKUP_IDX__DCC_INFO_1);
 		DccInst.functions = (encoded_value >> 24) & 0x000000FF;
+		DccInst.signal_state = (signal_state_t)((encoded_value >> 16) & 0x000000FF);
+		cnt_start(COUNTER_SIGNAL_HOLD, mem_read_backup_register(BACKUP_IDX__SIGNAL_HOLD));
 	}
 	else
 	{
@@ -61,6 +65,7 @@ void dcc_init(uint32_t backup_valid)
 		DccInst.actual_speed = 0;
 		DccInst.actual_dir = DIR_DEFAULT_VALUE;
 		DccInst.functions = 0x80;
+		cnt_start(COUNTER_SIGNAL_HOLD, 0U);
 	}
 }
 
@@ -72,8 +77,9 @@ void dcc_backup_info(void)
 	encoded_value = (DccInst.signal_state_active << 24) | (DccInst.dcc_target_speed << 16) | (DccInst.actual_speed << 8) | (DccInst.actual_dir);
 	mem_write_backup_register(BACKUP_IDX__DCC_INFO_0, encoded_value);
 
-	encoded_value = (DccInst.functions << 24);
+	encoded_value = (DccInst.functions << 24) | ((uint32_t)DccInst.signal_state << 16);
 	mem_write_backup_register(BACKUP_IDX__DCC_INFO_1, encoded_value);
+	mem_write_backup_register(BACKUP_IDX__SIGNAL_HOLD, cnt_read(COUNTER_SIGNAL_HOLD));
 }
 
 
@@ -120,8 +126,7 @@ uint32_t decoded_address_match(DCC_MESSAGE_STRUCT *msg, uint8_t *buffer, uint8_t
 		return FALSE;
 }
 
-// 0: Same content als previous message
-// 1: New content
+// Return TRUE only on the second matching addressed message.
 static uint32_t msg_with_new_content(const uint8_t *buffer, uint8_t len)
 {
 	if((len != last_len) || (memcmp(buffer, last_msg, len) != 0))
@@ -132,6 +137,12 @@ static uint32_t msg_with_new_content(const uint8_t *buffer, uint8_t len)
 		memcpy(last_msg, buffer, len);
 		last_len = len;
 
+		last_confirmed = FALSE;
+		return FALSE;
+	}
+	if(!last_confirmed)
+	{
+		last_confirmed = TRUE;
 		return TRUE;
 	}
 	return FALSE;
@@ -141,11 +152,13 @@ static uint32_t msg_with_new_content(const uint8_t *buffer, uint8_t len)
 static void msg_new_content_reset(void)
 {
 	last_len = 0U;
+	last_confirmed = FALSE;
 }
+
 
 // 1. Check for a new message in the buffer
 // 2. Check the message recipient (address)
-// 3. Check for new contents
+// 3. Confirm matching contents and reject confirmed duplicates
 // 4. Decode the protocol
 // Called in main loop
 void dcc_check_for_new_messages(void)
@@ -186,13 +199,18 @@ void dcc_check_for_new_messages(void)
 	else
 		debug_set_led_status_green(LED_DCC_COM, 20U);
 
-	// Check for new content
+	// Wait for confirmation or ignore an already confirmed duplicate.
 	if(msg_with_new_content(buffer, len) == FALSE)
 	{
-		// Message content is still the same
 		DccRx.msg_out_i = (DccRx.msg_out_i + 1) & (DCC_MAX_MESSAGES_QUEUE-1);
 		return;
 	}
+
+	// Store the confirmed raw message in the circular history
+	//DccRx.msg_confirmed[DccRx.msg_confirmed_idx] = DccRx.msg[DccRx.msg_out_i];
+	memcpy(DccRx.msg_confirmed[DccRx.msg_confirmed_idx].data, buffer, len);
+	DccRx.msg_confirmed[DccRx.msg_confirmed_idx].len = len;
+	DccRx.msg_confirmed_idx = (DccRx.msg_confirmed_idx + 1U) & (DCC_MAX_MESSAGES_CONFIRMED - 1U);
 
 	if(msg.addr != ADDR_BROADCAST)
 	{
@@ -215,18 +233,13 @@ void dcc_check_for_new_messages(void)
 		// ---------- MSG_DCC_MEMORY ----------
 		if(msg.nb_data == 6)
 		{
-			uint8_t mem_idx = msg.data[1] * 4;
+			uint32_t mem_idx = (uint32_t)msg.data[1] * 4U;
 
 			if(mem_idx < sizeof(Mem))
 			{
-				// Store the value into the RAM memory
-				memcpy(((uint8_t *)&Mem) + mem_idx, &msg.data[2], 4);
-
-				// Store RAM configuration into flash memory
-				mem_write_config();
-				mem_read_config();
-
-				// LED blink one time in red
+				// Update RAM immediately and defer the Flash write
+				memcpy(((uint8_t *)&Mem) + mem_idx, &msg.data[2], 4U);
+				mem_write_request();
 				debug_set_led_status_red(LED_MEM_WRITE, 50);
 			}
 		}

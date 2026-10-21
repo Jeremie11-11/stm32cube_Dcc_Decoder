@@ -36,6 +36,9 @@ typedef struct{
 	uint16_t sp40kmh_cnt;
 	uint16_t stop_cnt;
 
+	uint16_t hold_signal_s[SIGNAL_NBR];
+	dir_t last_signal_dir;
+
 	uint16_t timeout_tab[8];
 	uint32_t in_idx;
 	uint32_t out_idx;
@@ -44,6 +47,8 @@ typedef struct{
 
 extern const int16_t signal_speed_limit[];
 
+
+void signal_init(void);
 
 void signal_speed_limit_update(void);
 

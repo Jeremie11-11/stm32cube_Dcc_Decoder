@@ -11,6 +11,12 @@
 #include "main.h"
 
 
+typedef enum{
+	MOTOR_IDLE = 0,
+	MOTOR_RUN,
+	MOTOR_STOPPING
+} motor_state_t;
+
 typedef struct{
 	uint32_t ccr;
 	int32_t Unew_mV;
@@ -28,6 +34,7 @@ typedef struct{
 	int32_t starting;
 	int32_t step;
 	int32_t running;
+	motor_state_t state;
 	int32_t use_backup_register;
 	int32_t init_current[100];
 	uint16_t Uref_cl[29];

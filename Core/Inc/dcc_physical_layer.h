@@ -12,6 +12,7 @@
 
 #define DCC_MAX_MESSAGE_LEN 10
 #define DCC_MAX_MESSAGES_QUEUE 16	// Has to be a power of 2
+#define DCC_MAX_MESSAGES_CONFIRMED 8	// Has to be a power of 2
 
 // How many time a message has to be sent
 //#define DCC_MSG_REPEATED_TIME 100
@@ -58,6 +59,8 @@ typedef struct{
 	uint8_t msg_out_i;
 	uint16_t timeout;
 	MESSAGE_STRUCT msg[DCC_MAX_MESSAGES_QUEUE];
+	MESSAGE_STRUCT msg_confirmed[DCC_MAX_MESSAGES_CONFIRMED];
+	uint8_t msg_confirmed_idx;
 } DCC_PROTOCOL_STRUCT;
 
 typedef struct{

@@ -39,6 +39,7 @@ void mot_init(uint32_t backup_valid)
 	if(backup_valid == TRUE)
 	{
 		Motor.use_backup_register = TRUE;
+		Motor.state = (DccInst.actual_speed != 0) ? MOTOR_RUN : MOTOR_STOPPING;
 
 		if(DccInst.actual_speed != 0)
 			// Motor startup as soon as possible
@@ -50,6 +51,7 @@ void mot_init(uint32_t backup_valid)
 	else
 	{
 		Motor.use_backup_register = FALSE;
+		Motor.state = MOTOR_IDLE;
 
 		// Delay motor startup when no valid backup is available
 		cnt_start(COUNTER_MOTOR_SPEED_UPDATE, 2000U);
@@ -62,12 +64,19 @@ void mot_speed_update(void)
 {
 	int32_t old_speed = DccInst.actual_speed;
 
-	// Leave if no valid drive instruction have been received
-	if((DccInst.actual_dir != DIR_FORWARDS) && (DccInst.actual_dir != DIR_BACKWARDS))
-		return;
-
 	// Leave if the counter is not issued
 	if(cnt_read(COUNTER_MOTOR_SPEED_UPDATE) > 0)
+		return;
+
+	// The shared restart delay also defines the end of immobilization
+	if(Motor.state == MOTOR_STOPPING)
+	{
+		Motor.state = MOTOR_IDLE;
+		mem_invalidate_backup();
+	}
+
+	// Leave if no valid drive instruction have been received
+	if((DccInst.actual_dir != DIR_FORWARDS) && (DccInst.actual_dir != DIR_BACKWARDS))
 		return;
 /*
 	if(DccInst.emergency_stop != 0)
@@ -192,9 +201,10 @@ void mot_speed_update(void)
 	{
 		// ----- Stopping move or not moving -----
 
-		if(Motor.running != FALSE)
+		if(Motor.state == MOTOR_RUN)
 		{
 			// PWM control is now disable
+			Motor.state = MOTOR_STOPPING;
 			Motor.running = FALSE;
 
 			// Disable H-bridge
@@ -255,6 +265,7 @@ void mot_speed_update(void)
 		Motor.i = 0;
 
 		// PWM control is now enable
+		Motor.state = MOTOR_RUN;
 		Motor.running = TRUE;
 	}
 	else
@@ -264,7 +275,8 @@ void mot_speed_update(void)
 	}
 
 	Motor.use_backup_register = FALSE;
-	dcc_backup_info();
+	if(Motor.state == MOTOR_RUN)
+		dcc_backup_info();
 }
 
 

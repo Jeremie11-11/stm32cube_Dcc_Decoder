@@ -8,12 +8,14 @@
 #include <dcc_signal.h>
 
 #include <dcc_protocol_rx.h>
+#include <m_memory.h>
+#include <m_counter.h>
 
 
 DCC_SIGNAL_STRUCT DccSignal;
 
 extern DCC_INSTRUCTION_STRUCT DccInst;
-
+extern struct MEM_CONFIG_STRUCT Mem;
 
 
 const int16_t signal_speed_limit[] =
@@ -43,24 +45,56 @@ static const DCC_TIMEOUT_PATTERN_STRUCT dcc_timeout_pattern[] =
 };
 
 
-void signal_speed_limit_update()
+void signal_init(void)
 {
+	uint32_t time_s = Mem.signal_hold_60kmh_s;
+
+	DccSignal.last_signal_dir = DccInst.actual_dir;
+
+	// Limit the time range to avoid overflow
+	if(time_s > 36000U)
+		time_s = 36000U;
+
+	DccSignal.hold_signal_s[SIGNAL_INVALID] = 0U;
+	DccSignal.hold_signal_s[SIGNAL_STOP] = 0U;
+	DccSignal.hold_signal_s[SIGNAL_NOCHANGE] = 0U;
+	DccSignal.hold_signal_s[SIGNAL_FREE] = 0U;
+	DccSignal.hold_signal_s[SIGNAL_40KMH] = (uint16_t)((time_s * 3U) / 2U);
+	DccSignal.hold_signal_s[SIGNAL_60KMH] = (uint16_t)(time_s);
+	DccSignal.hold_signal_s[SIGNAL_90KMH] = (uint16_t)((time_s * 2U) / 3U);
+}
+
+
+void signal_speed_limit_update(void)
+{
+
 	// Keep the last valid state when no new limit is requested
 	switch(DccInst.signal_state)
 	{
 		case SIGNAL_STOP:
+		case SIGNAL_FREE:
 		case SIGNAL_40KMH:
 		case SIGNAL_60KMH:
 		case SIGNAL_90KMH:
-		case SIGNAL_FREE:
 			DccInst.signal_state_active = DccInst.signal_state;
+			cnt_start(COUNTER_SIGNAL_HOLD, (uint32_t)DccSignal.hold_signal_s[DccInst.signal_state] * 1000U);
+			break;
+
+		case SIGNAL_NOCHANGE:
+			// Check if timer is done or if the direction changed
+			if((cnt_read(COUNTER_SIGNAL_HOLD) == 0U) || (DccSignal.last_signal_dir != DccInst.actual_dir))
+				DccInst.signal_state_active = SIGNAL_FREE;
 			break;
 
 		default:
 			break;
 	}
 
+	// Update speed limit
 	DccInst.speed_limit = signal_speed_limit[DccInst.signal_state_active];
+
+	// Update direction state (to detect direction change)
+	DccSignal.last_signal_dir = DccInst.actual_dir;
 }
 
 

@@ -61,7 +61,7 @@ struct MEM_CONFIG_STRUCT{
 	uint32_t motor_i;
 	uint32_t motor_d;
 	uint32_t debug_leds;
-	uint32_t unused;
+	uint32_t signal_hold_60kmh_s;
 
 	uint32_t ratio_spd_fwd_Uref;
 	uint32_t ratio_spd_bwd_Uref;
@@ -86,6 +86,10 @@ struct MEM_MOTOR_DATA_STRUCT{
 
 void mem_init(void);
 
+void mem_update(void);
+
+void mem_write_request(void);
+
 void mem_write_page(uint32_t page, void *memory, uint32_t memory_size);
 
 void mem_read_page(uint32_t page, void *memory, uint32_t memory_size);
@@ -108,6 +112,7 @@ typedef enum{
 	BACKUP_IDX__MAGIC_WORD = 0,
 	BACKUP_IDX__DCC_INFO_0 = 1,
 	BACKUP_IDX__DCC_INFO_1 = 2,
+	BACKUP_IDX__SIGNAL_HOLD = 3,
 
 } backup_idx_t;
 
@@ -117,5 +122,7 @@ void mem_write_backup_register(backup_idx_t index, uint32_t value);
 uint32_t mem_read_backup_register(backup_idx_t index);
 
 uint32_t mem_is_backup_valid(void);
+
+void mem_invalidate_backup(void);
 
 #endif /* INC_M_MEMORY_H_ */

@@ -7,6 +7,8 @@
 
 #include <dcc_protocol_rx.h>
 #include <m_memory.h>
+#include <m_counter.h>
+#include <dcc_signal.h>
 #include <string.h>
 //#include "define.h"
 
@@ -16,6 +18,8 @@ extern RTC_HandleTypeDef hrtc;
 struct MEM_CONFIG_STRUCT Mem;
 struct MEM_MOTOR_STATUS_STRUCT memMotStat;
 struct MEM_MOTOR_DATA_STRUCT memMotData;
+
+static uint32_t config_write_pending = FALSE;
 
 extern DCC_INSTRUCTION_STRUCT DccInst;
 
@@ -73,7 +77,7 @@ void mem_init(void)
 		Mem.motor_i = 2;
 		Mem.motor_d = 0;
 		Mem.debug_leds = 1;
-		Mem.unused = 0;
+		Mem.signal_hold_60kmh_s = 0U;
 
 		Mem.ratio_spd_fwd_Uref = 300;
 		Mem.ratio_spd_bwd_Uref = 300;
@@ -84,6 +88,34 @@ void mem_init(void)
 
 		mem_read_config();
 	}
+}
+
+
+void mem_write_request(void)
+{
+	config_write_pending = TRUE;
+	cnt_start(COUNTER_CONFIG_INACTIVITY, 2000U);
+}
+
+
+void mem_update(void)
+{
+	struct MEM_CONFIG_STRUCT expected_config;
+
+	if((config_write_pending == FALSE) || (cnt_read(COUNTER_CONFIG_INACTIVITY) > 0U))
+		return;
+
+	memcpy(&expected_config, &Mem, sizeof(expected_config));
+	mem_write_config();
+
+	if(memcmp(&expected_config, &Mem, sizeof(expected_config)) != 0)
+	{
+		// Restore the requested values before the single retry
+		memcpy(&Mem, &expected_config, sizeof(Mem));
+		mem_write_config();
+	}
+
+	NVIC_SystemReset();
 }
 
 
@@ -193,6 +225,13 @@ void mem_write_backup_register(backup_idx_t index, uint32_t value)
 
 	HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR0, MEM_BACKUP_MAGIC_WORD);
 }
+
+void mem_invalidate_backup(void)
+{
+	HAL_PWR_EnableBkUpAccess();
+	HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR0, MEM_BACKUP_UNVALID_WORD);
+}
+
 
 uint32_t mem_read_backup_register(backup_idx_t index)
 {

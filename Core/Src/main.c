@@ -161,6 +161,8 @@ int main(void)
   	mot_init(FALSE);
   }
 
+  signal_init();
+
   dma_init();
   adc_init();
   tim_init();
@@ -189,6 +191,9 @@ int main(void)
 
 		// Update motor target speed (slope management) @200ms
 		mot_speed_update();
+
+		// Commit configuration one second after the last accepted memory update
+		mem_update();
 
 		// Enter sleep mode until next interrupt
 		HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
